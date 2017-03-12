@@ -77,9 +77,9 @@ public class MainActivity extends AppCompatActivity {
                     stream.close();
                 } catch (IOException e) {
                    appendToUI("IOx"+e.getMessage());
-                }catch (Exception e)
+                }catch (Exception ex)
                 {
-                    appendToUI("Exception in stream write" + e.getMessage());
+                    appendToUI("Exception in stream write" + ex.getLocalizedMessage()+ex.toString() + ex.getMessage());
                 }
 
             }
