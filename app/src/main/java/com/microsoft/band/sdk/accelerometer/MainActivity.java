@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onBandGyroscopeChanged(final BandGyroscopeEvent event) {
             if (event != null) {
+
                 appendToUI(String.format(" X = %.3f \n Y = %.3f\n Z = %.3f \n GX = %.3f\n GY = %.3f\n GZ = %.3f"
                                , event.getAccelerationX(),
                         event.getAccelerationY(), event.getAccelerationZ(),event.getAngularVelocityX(),event.getAngularVelocityY(),event.getAngularVelocityZ()));
