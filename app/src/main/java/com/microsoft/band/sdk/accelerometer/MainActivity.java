@@ -63,9 +63,10 @@ public class MainActivity extends AppCompatActivity {
                  * is try in a finally block accepted?
                  * */
                 try {
-                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                    Date date = new Date(event.getTimestamp());
-                    String sensorDateEntry = dateFormat.format(date) + "&" +
+                    //DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                    //Date date = new Date(event.getTimestamp());
+                    //dateFormat.format(date);
+                    String sensorDateEntry = event.getTimestamp() + "&" +
                             String.valueOf(event.getAccelerationX()) + "&" +
                             String.valueOf(event.getAccelerationY()) + "&" +
                             String.valueOf(event.getAccelerationZ()) + "&" +
