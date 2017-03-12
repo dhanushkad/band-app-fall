@@ -42,8 +42,8 @@ public class MainActivity extends AppCompatActivity {
      * The file to write the data
      * and the outputstream to use for data writing
      * **/
-    File accelGyroFile = null;
-    FileOutputStream stream = null;
+    File accelGyroFile;
+    FileOutputStream stream;
 
 
     private BandGyroscopeEventListener mGyroscopeEventListener = new BandGyroscopeEventListener() {
@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
                     //DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                     //Date date = new Date(event.getTimestamp());
                     //dateFormat.format(date);
-                    /*
+
                     String sensorDateEntry = event.getTimestamp() + "&" +
                             String.valueOf(event.getAccelerationX()) + "&" +
                             String.valueOf(event.getAccelerationY()) + "&" +
@@ -84,14 +84,14 @@ public class MainActivity extends AppCompatActivity {
                             String.valueOf(event.getAngularVelocityY()) + "&" +
                             String.valueOf(event.getAngularVelocityZ()) + "\n";
                             appendToUI("Entry : "+sensorDateEntry);
-                    */
 
-                    String sensorDateEntry = "PRINT \n";
+                    //String sensorDateEntry = "PRINT \n";
+                    stream = new FileOutputStream(accelGyroFile);
                     stream.write(sensorDateEntry.getBytes());
                     stream.close();
                 } catch (IOException e) {
                    appendToUI("IOx"+e.getMessage());
-                }catch (Exception ex)
+                } catch (Exception ex)
                 {
                     appendToUI("Exception in stream write" + ex.getLocalizedMessage()+ex.toString() + ex.getMessage());
                 }
@@ -135,12 +135,9 @@ public class MainActivity extends AppCompatActivity {
             try {
                 accelGyroFile = getFileCreated("accelerometer.txt");
                 appendToUI("File created in" + accelGyroFile.getPath());
-                stream = new FileOutputStream(accelGyroFile);
-                appendToUI("Stream created" + stream.getChannel());
-            } catch (FileNotFoundException e) {
-                appendToUI("Error file not found " + e.getMessage());
+
             }catch (Exception ex){
-                appendToUI("Error file creation and stream creation " + ex.getMessage());
+                appendToUI("Error file creation " + ex.getMessage());
             }
         }
 
