@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private BandGyroscopeEventListener mGyroscopeEventListener = new BandGyroscopeEventListener() {
         @Override
         public void onBandGyroscopeChanged(final BandGyroscopeEvent event) {
-            if (event != null) {
+            if (event != null && stream !=null) {
 
                 /*appendToUI(String.format(" X = %.3f \n Y = %.3f\n Z = %.3f \n GX = %.3f\n GY = %.3f\n GZ = %.3f"
                                , event.getAccelerationX(),
@@ -64,19 +64,11 @@ public class MainActivity extends AppCompatActivity {
                  * */
                 try {
 
-                    if(stream == null){
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                    Date date = new Date(event.getTimestamp());
 
-                        appendToUI("stream is null");
-                    }
-                    if(accelGyroFile == null){
 
-                        appendToUI("file is null");
-                    }
-                    //DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                    //Date date = new Date(event.getTimestamp());
-                    //dateFormat.format(date);
-
-                    String sensorDateEntry = event.getTimestamp() + "&" +
+                    String sensorDateEntry = dateFormat.format(date) + "&" +
                             String.valueOf(event.getAccelerationX()) + "&" +
                             String.valueOf(event.getAccelerationY()) + "&" +
                             String.valueOf(event.getAccelerationZ()) + "&" +
@@ -86,9 +78,9 @@ public class MainActivity extends AppCompatActivity {
                             appendToUI("Entry : "+sensorDateEntry);
 
                     //String sensorDateEntry = "PRINT \n";
-                    stream = new FileOutputStream(accelGyroFile);
+
                     stream.write(sensorDateEntry.getBytes());
-                    stream.close();
+
                 } catch (IOException e) {
                    appendToUI("IOx"+e.getMessage());
                 } catch (Exception ex)
@@ -96,6 +88,8 @@ public class MainActivity extends AppCompatActivity {
                     appendToUI("Exception in stream write" + ex.getLocalizedMessage()+ex.toString() + ex.getMessage());
                 }
 
+            }else {
+                appendToUI("Event or stream is null");
             }
         }
     };
@@ -135,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 accelGyroFile = getFileCreated("accelerometer.txt");
                 appendToUI("File created in" + accelGyroFile.getPath());
-
+                stream = new FileOutputStream(accelGyroFile);
             }catch (Exception ex){
                 appendToUI("Error file creation " + ex.getMessage());
             }
@@ -197,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     client.disconnect().await();
                     stream.close();
-                    
+
                 } catch (InterruptedException e) {
                     // Do nothing as this is happening during destroy
                 } catch (BandException e) {
