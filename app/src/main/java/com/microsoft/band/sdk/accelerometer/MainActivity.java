@@ -94,7 +94,6 @@ public class MainActivity extends AppCompatActivity {
         File file = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_DOCUMENTS), fileName);
         if (!file.mkdirs()) {
-
             appendToUI("Error occured in file writing");
         }
         return file;
@@ -120,8 +119,12 @@ public class MainActivity extends AppCompatActivity {
 
             try {
                 accelGyroFile = getFileCreated("accelerometer.txt");
+                textStatus.setText("File created in" + accelGyroFile.getPath());
                 stream = new FileOutputStream(accelGyroFile);
+                textStatus.append("Stream created" + stream.getChannel());
             } catch (FileNotFoundException e) {
+                appendToUI(e.getMessage());
+            }catch (Exception e){
                 appendToUI(e.getMessage());
             }
         }
