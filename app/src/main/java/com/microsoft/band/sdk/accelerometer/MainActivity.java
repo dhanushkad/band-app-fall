@@ -77,10 +77,16 @@ public class MainActivity extends AppCompatActivity {
 
                 } catch (IOException e) {
                    appendToUI(e.getMessage());
-                }finally {
+                }catch (Exception e)
+                {
+                    appendToUI(e.getMessage());
+                }
+                finally {
                     try {
                         stream.close();
                     } catch (IOException e) {
+                        appendToUI(e.getMessage());
+                    } catch (Exception e){
                         appendToUI(e.getMessage());
                     }
                 }
