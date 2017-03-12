@@ -51,18 +51,10 @@ public class MainActivity extends AppCompatActivity {
         public void onBandGyroscopeChanged(final BandGyroscopeEvent event) {
             if (event != null) {
 
-                appendToUI(String.format(" X = %.3f \n Y = %.3f\n Z = %.3f \n GX = %.3f\n GY = %.3f\n GZ = %.3f"
+                /*appendToUI(String.format(" X = %.3f \n Y = %.3f\n Z = %.3f \n GX = %.3f\n GY = %.3f\n GZ = %.3f"
                                , event.getAccelerationX(),
-                        event.getAccelerationY(), event.getAccelerationZ(),event.getAngularVelocityX(),event.getAngularVelocityY(),event.getAngularVelocityZ()));
-                DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                Date date = new Date(event.getTimestamp());
-                String sensorDateEntry = dateFormat.format(date) + "&" +
-                        String.valueOf(event.getAccelerationX()) + "&" +
-                        String.valueOf(event.getAccelerationY()) + "&" +
-                        String.valueOf(event.getAccelerationZ()) + "&" +
-                        String.valueOf(event.getAngularVelocityX()) + "&" +
-                        String.valueOf(event.getAngularVelocityY()) + "&" +
-                        String.valueOf(event.getAngularVelocityZ()) + "\n";
+                        event.getAccelerationY(), event.getAccelerationZ(),event.getAngularVelocityX(),event.getAngularVelocityY(),event.getAngularVelocityZ()));*/
+
 
 
                 /**
@@ -71,7 +63,18 @@ public class MainActivity extends AppCompatActivity {
                  * is try in a finally block accepted?
                  * */
                 try {
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                    Date date = new Date(event.getTimestamp());
+                    String sensorDateEntry = dateFormat.format(date) + "&" +
+                            String.valueOf(event.getAccelerationX()) + "&" +
+                            String.valueOf(event.getAccelerationY()) + "&" +
+                            String.valueOf(event.getAccelerationZ()) + "&" +
+                            String.valueOf(event.getAngularVelocityX()) + "&" +
+                            String.valueOf(event.getAngularVelocityY()) + "&" +
+                            String.valueOf(event.getAngularVelocityZ()) + "\n";
+                            appendToUI(sensorDateEntry);
                     stream.write(sensorDateEntry.getBytes());
+
                 } catch (IOException e) {
                    appendToUI(e.getMessage());
                 }finally {
