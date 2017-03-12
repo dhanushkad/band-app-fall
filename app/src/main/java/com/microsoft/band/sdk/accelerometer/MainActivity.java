@@ -104,11 +104,11 @@ public class MainActivity extends AppCompatActivity {
      * This returns a file created in the documents directory.
      *
      * */
-    public File getFileCreated(String fileName) {
+    public File getFileCreated(String fileName) throws IOException {
         // Get the directory for the user's documents directory.
         File file = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_DOCUMENTS), fileName);
-        if (!file.mkdirs()) {
+        if (!file.createNewFile()) {
             appendToUI("Error occured in file writing");
         }
         return file;
