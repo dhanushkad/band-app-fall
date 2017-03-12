@@ -42,8 +42,8 @@ public class MainActivity extends AppCompatActivity {
      * The file to write the data
      * and the outputstream to use for data writing
      * **/
-    File accelGyroFile ;
-    FileOutputStream stream;
+    File accelGyroFile = null;
+    FileOutputStream stream = null;
 
 
     private BandGyroscopeEventListener mGyroscopeEventListener = new BandGyroscopeEventListener() {
@@ -63,9 +63,19 @@ public class MainActivity extends AppCompatActivity {
                  * is try in a finally block accepted?
                  * */
                 try {
+
+                    if(stream == null){
+
+                        appendToUI("stream is null");
+                    }
+                    if(accelGyroFile == null){
+
+                        appendToUI("file is null");
+                    }
                     //DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                     //Date date = new Date(event.getTimestamp());
                     //dateFormat.format(date);
+                    /*
                     String sensorDateEntry = event.getTimestamp() + "&" +
                             String.valueOf(event.getAccelerationX()) + "&" +
                             String.valueOf(event.getAccelerationY()) + "&" +
@@ -74,6 +84,9 @@ public class MainActivity extends AppCompatActivity {
                             String.valueOf(event.getAngularVelocityY()) + "&" +
                             String.valueOf(event.getAngularVelocityZ()) + "\n";
                             appendToUI("Entry : "+sensorDateEntry);
+                    */
+
+                    String sensorDateEntry = "PRINT \n";
                     stream.write(sensorDateEntry.getBytes());
                     stream.close();
                 } catch (IOException e) {
