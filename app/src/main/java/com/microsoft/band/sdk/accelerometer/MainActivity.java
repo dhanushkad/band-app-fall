@@ -196,10 +196,14 @@ public class MainActivity extends AppCompatActivity {
             if (client != null) {
                 try {
                     client.disconnect().await();
+                    stream.close();
+                    
                 } catch (InterruptedException e) {
                     // Do nothing as this is happening during destroy
                 } catch (BandException e) {
                     // Do nothing as this is happening during destroy
+                } catch (IOException e) {
+
                 }
             }
             super.onDestroy();
