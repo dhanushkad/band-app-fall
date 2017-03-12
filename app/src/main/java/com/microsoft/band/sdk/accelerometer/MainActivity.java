@@ -72,23 +72,14 @@ public class MainActivity extends AppCompatActivity {
                             String.valueOf(event.getAngularVelocityX()) + "&" +
                             String.valueOf(event.getAngularVelocityY()) + "&" +
                             String.valueOf(event.getAngularVelocityZ()) + "\n";
-                            appendToUI(sensorDateEntry);
+                            appendToUI("Entry : "+sensorDateEntry);
                     stream.write(sensorDateEntry.getBytes());
-
+                    stream.close();
                 } catch (IOException e) {
-                   appendToUI(e.getMessage());
+                   appendToUI("IOx"+e.getMessage());
                 }catch (Exception e)
                 {
-                    appendToUI(e.getMessage());
-                }
-                finally {
-                    try {
-                        stream.close();
-                    } catch (IOException e) {
-                        appendToUI(e.getMessage());
-                    } catch (Exception e){
-                        appendToUI(e.getMessage());
-                    }
+                    appendToUI("Exception in stream write" + e.getMessage());
                 }
 
             }
@@ -121,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
             btnStart.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    textStatus.setText("");
+
                     new GyroscopeSubscriptionTask().execute();
                 }
             });
@@ -129,20 +120,20 @@ public class MainActivity extends AppCompatActivity {
 
             try {
                 accelGyroFile = getFileCreated("accelerometer.txt");
-                textStatus.setText("File created in" + accelGyroFile.getPath());
+                appendToUI("File created in" + accelGyroFile.getPath());
                 stream = new FileOutputStream(accelGyroFile);
-                textStatus.append("Stream created" + stream.getChannel());
+                appendToUI("Stream created" + stream.getChannel());
             } catch (FileNotFoundException e) {
-                appendToUI(e.getMessage());
-            }catch (Exception e){
-                appendToUI(e.getMessage());
+                appendToUI("Error file not found " + e.getMessage());
+            }catch (Exception ex){
+                appendToUI("Error file creation and stream creation " + ex.getMessage());
             }
         }
 
         @Override
         protected void onResume() {
             super.onResume();
-            textStatus.setText("");
+
         }
 
         @Override
@@ -152,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     client.getSensorManager().unregisterGyroscopeEventListener(mGyroscopeEventListener);
                 } catch (BandIOException e) {
-                    appendToUI(e.getMessage());
+                    appendToUI("Band Exception"+e.getMessage());
                 }
             }
         }
