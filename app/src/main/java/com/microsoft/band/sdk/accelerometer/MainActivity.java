@@ -13,7 +13,9 @@ import com.microsoft.band.sensors.BandGyroscopeEventListener;
 
 
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.app.Activity;
 import android.os.AsyncTask;
@@ -21,13 +23,28 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
-
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 
 public class MainActivity extends AppCompatActivity {
     private BandClient client = null;
     private Button btnStart;
     private TextView textStatus;
+
+    /**
+     * The file to write the data
+     * and the outputstream to use for data writing
+     * **/
+    File accelGyroFile ;
+    FileOutputStream stream;
+
 
     private BandGyroscopeEventListener mGyroscopeEventListener = new BandGyroscopeEventListener() {
         @Override
@@ -36,9 +53,52 @@ public class MainActivity extends AppCompatActivity {
                 appendToUI(String.format(" X = %.3f \n Y = %.3f\n Z = %.3f \n GX = %.3f\n GY = %.3f\n GZ = %.3f"
                                , event.getAccelerationX(),
                         event.getAccelerationY(), event.getAccelerationZ(),event.getAngularVelocityX(),event.getAngularVelocityY(),event.getAngularVelocityZ()));
+                DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                Date date = new Date(event.getTimestamp());
+                String sensorDateEntry = dateFormat.format(date) + "&" +
+                        String.valueOf(event.getAccelerationX()) + "&" +
+                        String.valueOf(event.getAccelerationY()) + "&" +
+                        String.valueOf(event.getAccelerationZ()) + "&" +
+                        String.valueOf(event.getAngularVelocityX()) + "&" +
+                        String.valueOf(event.getAngularVelocityY()) + "&" +
+                        String.valueOf(event.getAngularVelocityZ()) + "\n";
+
+
+                /**
+                 * This block inst very good
+                 * rewrite this.
+                 * is try in a finally block accepted?
+                 * */
+                try {
+                    stream.write(sensorDateEntry.getBytes());
+                } catch (IOException e) {
+                   appendToUI(e.getMessage());
+                }finally {
+                    try {
+                        stream.close();
+                    } catch (IOException e) {
+                        appendToUI(e.getMessage());
+                    }
+                }
+
             }
         }
     };
+
+    /**
+     * This returns a file created in the documents directory.
+     *
+     * */
+    public File getFileCreated(String fileName) {
+        // Get the directory for the user's documents directory.
+        File file = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOCUMENTS), fileName);
+        if (!file.mkdirs()) {
+
+            appendToUI("Error occured in file writing");
+        }
+        return file;
+    }
 
 
 
@@ -56,6 +116,13 @@ public class MainActivity extends AppCompatActivity {
                     new GyroscopeSubscriptionTask().execute();
                 }
             });
+
+            accelGyroFile = getFileCreated("accelerometer.txt");
+            try {
+                stream = new FileOutputStream(accelGyroFile);
+            } catch (FileNotFoundException e) {
+                appendToUI(e.getMessage());
+            }
         }
 
         @Override
