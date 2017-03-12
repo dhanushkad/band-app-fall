@@ -117,8 +117,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
-            accelGyroFile = getFileCreated("accelerometer.txt");
+
             try {
+                accelGyroFile = getFileCreated("accelerometer.txt");
                 stream = new FileOutputStream(accelGyroFile);
             } catch (FileNotFoundException e) {
                 appendToUI(e.getMessage());
