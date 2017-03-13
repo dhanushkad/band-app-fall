@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 accelGyroFile = getFileCreated("accelerometer.txt");
                 appendToUI("File created in" + accelGyroFile.getPath());
-                stream = new FileOutputStream(accelGyroFile);
+                stream = new FileOutputStream(accelGyroFile,true);
             }catch (Exception ex){
                 appendToUI("Error file creation " + ex.getMessage());
             }
