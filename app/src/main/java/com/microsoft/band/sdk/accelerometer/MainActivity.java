@@ -7,6 +7,8 @@ import com.microsoft.band.BandException;
 import com.microsoft.band.BandInfo;
 import com.microsoft.band.BandIOException;
 import com.microsoft.band.ConnectionState;
+import com.microsoft.band.sensors.BandHeartRateEvent;
+import com.microsoft.band.sensors.HeartRateConsentListener;
 import com.microsoft.band.sensors.SampleRate;
 import com.microsoft.band.sensors.BandGyroscopeEvent;
 import com.microsoft.band.sensors.BandGyroscopeEventListener;
@@ -14,6 +16,10 @@ import com.microsoft.band.sensors.BandGyroscopeEventListener;
 import  com.microsoft.band.sensors.BandDistanceEvent;
 import  com.microsoft.band.sensors.BandDistanceEventListener;
 
+import com.microsoft.band.sensors.BandHeartRateEventListener;
+//import com.microsoft.band.sensors.BandHeartRateEvent;
+
+import android.app.Activity;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
@@ -26,6 +32,7 @@ import android.widget.TextView;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -36,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnStart;
     private TextView textStatus;
     private TextView textView;
+    private TextView textView2;
     /**
      * The file to write the data
      * and the outputstream to use for data writing
@@ -50,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
                 try{
 
-                    appendTOTextView(bandDistanceEvent.getMotionType().toString());
+                    appendTOTextView("Movement Status  :  "+ bandDistanceEvent.getMotionType().toString());
                 }catch (Exception e){
 
                     System.out.println(e);
@@ -58,7 +66,24 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+    private BandHeartRateEventListener mHeartRateEventListener = new BandHeartRateEventListener() {
 
+        @Override
+        public void onBandHeartRateChanged( BandHeartRateEvent event) {
+            if (event != null) {
+                 try{
+
+                   appendToUI(String.format("Heart Rate : %d beats per minute\n"
+                             + "Quality : %s\n", event.getHeartRate(), event.getQuality()));
+                 }catch (Exception e){
+
+                     appendToUI("Event or gyroFileStream is null");
+                }
+
+
+            }
+        }
+    };
 
     private BandGyroscopeEventListener mGyroscopeEventListener = new BandGyroscopeEventListener() {
         @Override
@@ -106,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+
     /**
      * This returns a file created in the documents directory.
      */
@@ -124,14 +150,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        textView2 = (TextView) findViewById(R.id.textView2);
         textStatus = (TextView) findViewById(R.id.textStatus);
         textView = (TextView) findViewById(R.id.textView);
+        final WeakReference<Activity> reference = new WeakReference<Activity>(this);
         btnStart = (Button) findViewById(R.id.btnStart);
         btnStart.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                new HeartRateConsentTask().execute(reference);
                 new SubscriptionTasks().execute();
 
             }
@@ -161,21 +188,60 @@ public class MainActivity extends AppCompatActivity {
         if (client != null) {
             try {
                 client.getSensorManager().unregisterGyroscopeEventListener(mGyroscopeEventListener);
-                client.getSensorManager().unregisterDistanceEventListener(mDistantEventListener);
+               client.getSensorManager().unregisterDistanceEventListener(mDistantEventListener);
+                client.getSensorManager().unregisterHeartRateEventListener(mHeartRateEventListener);
+
             } catch (BandIOException e) {
                 appendTOTextStatus("Band Exception" + e.getMessage());
             }
         }
     }
+    private class HeartRateConsentTask extends AsyncTask<WeakReference<Activity>, Void, Void> {
+        @Override
+        protected Void doInBackground(WeakReference<Activity>... params) {
+            try {
+                if (getConnectedBandClient()) {
 
+                    if (params[0].get() != null) {
+                        client.getSensorManager().requestHeartRateConsent(params[0].get(), new HeartRateConsentListener() {
+                            @Override
+                            public void userAccepted(boolean consentGiven) {
+                            }
+                        });
+                    }
+                } else {
+                    appendToUI("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
+                }
+            } catch (BandException e) {
+                String exceptionMessage="";
+                switch (e.getErrorType()) {
+                    case UNSUPPORTED_SDK_VERSION_ERROR:
+                        exceptionMessage = "Microsoft Health BandService doesn't support your SDK Version. Please update to latest SDK.\n";
+                        break;
+                    case SERVICE_ERROR:
+                        exceptionMessage = "Microsoft Health BandService is not available. Please make sure Microsoft Health is installed and that you have the correct permissions.\n";
+                        break;
+                    default:
+                        exceptionMessage = "Unknown error occured: " + e.getMessage() + "\n";
+                        break;
+                }
+                appendToUI(exceptionMessage);
+
+            } catch (Exception e) {
+                appendToUI(e.getMessage());
+            }
+            return null;
+        }
+    }
     private class SubscriptionTasks extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... params) {
             try {
                 if (getConnectedBandClient()) {
-                    appendTOTextStatus("Band is connected.\n");
+                    //("Band is connected.\n");
                     client.getSensorManager().registerGyroscopeEventListener(mGyroscopeEventListener, SampleRate.MS128);
                     client.getSensorManager().registerDistanceEventListener(mDistantEventListener);
+                    client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
                 } else {
                     appendTOTextStatus("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
                 }
@@ -227,7 +293,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
+    private void appendToUI(final String string) {
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                textView2.setText(string);
+            }
+        });
+    }
     private void appendTOTextView(final String string) {
         this.runOnUiThread(new Runnable() {
             @Override

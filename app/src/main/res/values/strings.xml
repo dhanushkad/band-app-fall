@@ -1,8 +1,10 @@
 <resources>
-    <string name="app_name">Gyroscope</string>
+    <string name="app_name">Fall Detection</string>
     <string name="start" />
     <string name="consent">Acclerometer Values</string>
     <string name="textStatus" />
-    <string name="btnStart">Gyroscope</string>
-    <string name="btnstarts">Gyroscope</string>
+
+
+    <string name="btnStart">START</string>
+
 </resources>
