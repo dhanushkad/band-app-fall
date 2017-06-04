@@ -44,10 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView textStatus;
     private TextView textView;
     private TextView textView2;
-    /**
-     * The file to write the data
-     * and the outputstream to use for data writing
-     **/
+
     File accelGyroFile;
     FileOutputStream gyroFileStream;
 
@@ -65,7 +62,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-    };
+    };  // Movement Status receiving
+
+
     private BandHeartRateEventListener mHeartRateEventListener = new BandHeartRateEventListener() {
 
         @Override
@@ -83,28 +82,18 @@ public class MainActivity extends AppCompatActivity {
 
             }
         }
-    };
+    }; // Heart rate receiving
 
     private BandGyroscopeEventListener mGyroscopeEventListener = new BandGyroscopeEventListener() {
         @Override
         public void onBandGyroscopeChanged(final BandGyroscopeEvent event) {
+
             if (event != null && gyroFileStream != null) {
 
-                /*appendTOTextStatus(String.format(" X = %.3f \n Y = %.3f\n Z = %.3f \n GX = %.3f\n GY = %.3f\n GZ = %.3f"
-                               , event.getAccelerationX(),
-                        event.getAccelerationY(), event.getAccelerationZ(),event.getAngularVelocityX(),event.getAngularVelocityY(),event.getAngularVelocityZ()));*/
-
-
-                /**
-                 * This block inst very good
-                 * rewrite this.
-                 * is try in a finally block accepted?
-                 * */
                 try {
 
                     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                     Date date = new Date(event.getTimestamp());
-
 
                     String sensorDateEntry = dateFormat.format(date) + "&" +
                             String.valueOf(event.getAccelerationX()) + "&" +
@@ -273,6 +262,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 client.disconnect().await();
                 gyroFileStream.close();
+
 
             } catch (InterruptedException e) {
                 // Do nothing as this is happening during destroy
