@@ -19,9 +19,9 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:minHeight="@dimen/abc_text_size_display_4_material"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_below="@+id/btnStart" />
+        android:layout_below="@+id/btnStart"
+        android:layout_alignRight="@+id/textView"
+        android:layout_alignEnd="@+id/textView" />
 
     <Button
         android:layout_width="wrap_content"
@@ -62,6 +62,17 @@
         android:layout_below="@+id/textStatus"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
+        android:layout_toStartOf="@+id/btnStart"
+        android:layout_alignRight="@+id/textStatus"
+        android:layout_alignEnd="@+id/textStatus" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/uv"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
         android:layout_toLeftOf="@+id/btnStart"
         android:layout_toStartOf="@+id/btnStart" />
 

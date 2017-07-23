@@ -22,6 +22,10 @@ import com.microsoft.band.sensors.BandHeartRateEventListener;
 import com.microsoft.band.sensors.BandSkinTemperatureEvent;
 import com.microsoft.band.sensors.BandSkinTemperatureEventListener;
 
+import com.microsoft.band.sensors.BandUVEvent;
+import com.microsoft.band.sensors.BandUVEventListener;
+
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Environment;
@@ -48,17 +52,18 @@ public class MainActivity extends AppCompatActivity {
     private TextView textView;
     private TextView textView2;
     private TextView skintemp;
+    private TextView uv;
 
     File accelGyroFile;
     FileOutputStream gyroFileStream;
 
-    private BandSkinTemperatureEventListener skinTemperatureEventListener= new BandSkinTemperatureEventListener() {
+    private BandUVEventListener UVEventListener = new BandUVEventListener() {
         @Override
-        public void onBandSkinTemperatureChanged(BandSkinTemperatureEvent bandSkinTemperatureEvent) {
-            if (bandSkinTemperatureEvent !=null){
+        public void onBandUVChanged(BandUVEvent bandUVEvent) {
+            if (bandUVEvent!=null){
                 try{
 
-                    appendTOskintemp("Skin Temperature  :  "+ bandSkinTemperatureEvent.getTemperature());
+                    appendTOUI("UV indexlevel  :  "+ bandUVEvent.getUVIndexLevel());
                 }catch (Exception e){
 
                     System.out.println(e);
@@ -66,6 +71,22 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    private BandSkinTemperatureEventListener skinTemperatureEventListener= new BandSkinTemperatureEventListener() {
+        @Override
+        public void onBandSkinTemperatureChanged(BandSkinTemperatureEvent bandSkinTemperatureEvent) {
+            if (bandSkinTemperatureEvent !=null){
+                try{
+
+                    appendTOskintemp("Skin Temperature  :  "+ bandSkinTemperatureEvent.getTemperature()+" Celcius ");
+                }catch (Exception e){
+
+                    System.out.println(e);
+                }
+            }
+        }
+    };
+
     private  BandDistanceEventListener mDistantEventListener = new BandDistanceEventListener() {
         @Override
         public void onBandDistanceChanged(BandDistanceEvent bandDistanceEvent) {
@@ -161,6 +182,7 @@ public class MainActivity extends AppCompatActivity {
         textStatus = (TextView) findViewById(R.id.textStatus);
         textView = (TextView) findViewById(R.id.textView);
         skintemp=(TextView) findViewById(R.id.skintemp);
+        uv=(TextView) findViewById(R.id.uv);
         final WeakReference<Activity> reference = new WeakReference<Activity>(this);
         btnStart = (Button) findViewById(R.id.btnStart);
         btnStart.setOnClickListener(new OnClickListener() {
@@ -199,6 +221,7 @@ public class MainActivity extends AppCompatActivity {
                client.getSensorManager().unregisterDistanceEventListener(mDistantEventListener);
                 client.getSensorManager().unregisterHeartRateEventListener(mHeartRateEventListener);
                 client.getSensorManager().unregisterSkinTemperatureEventListener(skinTemperatureEventListener);
+                client.getSensorManager().unregisterUVEventListener(UVEventListener);
 
             } catch (BandIOException e) {
                 appendTOTextStatus("Band Exception" + e.getMessage());
@@ -252,6 +275,9 @@ public class MainActivity extends AppCompatActivity {
                     client.getSensorManager().registerDistanceEventListener(mDistantEventListener);
                     client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
                     client.getSensorManager().registerSkinTemperatureEventListener(skinTemperatureEventListener);
+                    client.getSensorManager().registerUVEventListener(UVEventListener);
+
+
                 } else {
                     appendTOTextStatus("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
                 }
@@ -309,6 +335,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 textView2.setText(string);
+            }
+        });
+    }
+    private void appendTOUI(final String string){
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                uv.setText(string);
             }
         });
     }
