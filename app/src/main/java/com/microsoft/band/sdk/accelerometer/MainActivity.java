@@ -19,6 +19,9 @@ import  com.microsoft.band.sensors.BandDistanceEventListener;
 import com.microsoft.band.sensors.BandHeartRateEventListener;
 //import com.microsoft.band.sensors.BandHeartRateEvent;
 
+import com.microsoft.band.sensors.BandSkinTemperatureEvent;
+import com.microsoft.band.sensors.BandSkinTemperatureEventListener;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Environment;
@@ -44,10 +47,25 @@ public class MainActivity extends AppCompatActivity {
     private TextView textStatus;
     private TextView textView;
     private TextView textView2;
+    private TextView skintemp;
 
     File accelGyroFile;
     FileOutputStream gyroFileStream;
 
+    private BandSkinTemperatureEventListener skinTemperatureEventListener= new BandSkinTemperatureEventListener() {
+        @Override
+        public void onBandSkinTemperatureChanged(BandSkinTemperatureEvent bandSkinTemperatureEvent) {
+            if (bandSkinTemperatureEvent !=null){
+                try{
+
+                    appendTOskintemp("Skin Temperature  :  "+ bandSkinTemperatureEvent.getTemperature());
+                }catch (Exception e){
+
+                    System.out.println(e);
+                }
+            }
+        }
+    };
     private  BandDistanceEventListener mDistantEventListener = new BandDistanceEventListener() {
         @Override
         public void onBandDistanceChanged(BandDistanceEvent bandDistanceEvent) {
@@ -142,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
         textView2 = (TextView) findViewById(R.id.textView2);
         textStatus = (TextView) findViewById(R.id.textStatus);
         textView = (TextView) findViewById(R.id.textView);
+        skintemp=(TextView) findViewById(R.id.skintemp);
         final WeakReference<Activity> reference = new WeakReference<Activity>(this);
         btnStart = (Button) findViewById(R.id.btnStart);
         btnStart.setOnClickListener(new OnClickListener() {
@@ -179,6 +198,7 @@ public class MainActivity extends AppCompatActivity {
                 client.getSensorManager().unregisterGyroscopeEventListener(mGyroscopeEventListener);
                client.getSensorManager().unregisterDistanceEventListener(mDistantEventListener);
                 client.getSensorManager().unregisterHeartRateEventListener(mHeartRateEventListener);
+                client.getSensorManager().unregisterSkinTemperatureEventListener(skinTemperatureEventListener);
 
             } catch (BandIOException e) {
                 appendTOTextStatus("Band Exception" + e.getMessage());
@@ -231,6 +251,7 @@ public class MainActivity extends AppCompatActivity {
                     client.getSensorManager().registerGyroscopeEventListener(mGyroscopeEventListener, SampleRate.MS128);
                     client.getSensorManager().registerDistanceEventListener(mDistantEventListener);
                     client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
+                    client.getSensorManager().registerSkinTemperatureEventListener(skinTemperatureEventListener);
                 } else {
                     appendTOTextStatus("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
                 }
@@ -298,6 +319,15 @@ public class MainActivity extends AppCompatActivity {
                 textView.setText(string);
             }
         });
+    }
+    private void appendTOskintemp(final String string){
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+             skintemp.setText(string);
+            }
+        });
+
     }
 
     private boolean getConnectedBandClient() throws InterruptedException, BandException {
