@@ -1,6 +1,10 @@
 package com.microsoft.band.sdk.accelerometer;
 
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.microsoft.band.BandClient;
 import com.microsoft.band.BandClientManager;
 import com.microsoft.band.BandException;
@@ -13,8 +17,8 @@ import com.microsoft.band.sensors.SampleRate;
 import com.microsoft.band.sensors.BandGyroscopeEvent;
 import com.microsoft.band.sensors.BandGyroscopeEventListener;
 
-import  com.microsoft.band.sensors.BandDistanceEvent;
-import  com.microsoft.band.sensors.BandDistanceEventListener;
+import com.microsoft.band.sensors.BandDistanceEvent;
+import com.microsoft.band.sensors.BandDistanceEventListener;
 
 import com.microsoft.band.sensors.BandHeartRateEventListener;
 //import com.microsoft.band.sensors.BandHeartRateEvent;
@@ -45,6 +49,7 @@ import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -58,15 +63,16 @@ public class MainActivity extends AppCompatActivity {
     private TextView textView3;
     File accelGyroFile;
     FileOutputStream gyroFileStream;
+    LoadingCache<String, String> heartBeatCache;
 
     private BandUVEventListener UVEventListener = new BandUVEventListener() {
         @Override
         public void onBandUVChanged(BandUVEvent bandUVEvent) {
-            if (bandUVEvent!=null){
-                try{
+            if (bandUVEvent != null) {
+                try {
 
-                    appendTOUI("UV indexlevel  :  "+ bandUVEvent.getUVIndexLevel());
-                }catch (Exception e){
+                    appendTOUI("UV indexlevel  :  " + bandUVEvent.getUVIndexLevel());
+                } catch (Exception e) {
 
                     System.out.println(e);
                 }
@@ -74,14 +80,14 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private BandSkinTemperatureEventListener skinTemperatureEventListener= new BandSkinTemperatureEventListener() {
+    private BandSkinTemperatureEventListener skinTemperatureEventListener = new BandSkinTemperatureEventListener() {
         @Override
         public void onBandSkinTemperatureChanged(BandSkinTemperatureEvent bandSkinTemperatureEvent) {
-            if (bandSkinTemperatureEvent !=null){
-                try{
+            if (bandSkinTemperatureEvent != null) {
+                try {
 
-                    appendTOskintemp("Skin Temperature  :  "+ bandSkinTemperatureEvent.getTemperature()+" Celcius ");
-                }catch (Exception e){
+                    appendTOskintemp("Skin Temperature  :  " + bandSkinTemperatureEvent.getTemperature() + " Celcius ");
+                } catch (Exception e) {
 
                     System.out.println(e);
                 }
@@ -89,15 +95,15 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private  BandDistanceEventListener mDistantEventListener = new BandDistanceEventListener() {
+    private BandDistanceEventListener mDistantEventListener = new BandDistanceEventListener() {
         @Override
         public void onBandDistanceChanged(BandDistanceEvent bandDistanceEvent) {
-            if(bandDistanceEvent != null){
+            if (bandDistanceEvent != null) {
 
-                try{
+                try {
 
-                    appendTOTextView("Movement Status  :  "+ bandDistanceEvent.getMotionType().toString());
-                }catch (Exception e){
+                    appendTOTextView("Movement Status  :  " + bandDistanceEvent.getMotionType().toString());
+                } catch (Exception e) {
 
                     System.out.println(e);
                 }
@@ -109,15 +115,15 @@ public class MainActivity extends AppCompatActivity {
     private BandHeartRateEventListener mHeartRateEventListener = new BandHeartRateEventListener() {
 
         @Override
-        public void onBandHeartRateChanged( BandHeartRateEvent event) {
+        public void onBandHeartRateChanged(BandHeartRateEvent event) {
             if (event != null) {
-                 try{
+                try {
+                    heartBeatCache.put(Long.toString(event.getTimestamp()), Long.toString(event.getHeartRate()));
+                    appendToUI(String.format("Heart Rate : %d beats per minute\n"
+                            + "Quality : %s\n", event.getHeartRate(), event.getQuality()));
+                } catch (Exception e) {
 
-                   appendToUI(String.format("Heart Rate : %d beats per minute\n"
-                             + "Quality : %s\n", event.getHeartRate(), event.getQuality()));
-                 }catch (Exception e){
-
-                     appendToUI("Event or gyroFileStream is null");
+                    appendToUI("Event or gyroFileStream is null");
                 }
 
 
@@ -145,6 +151,7 @@ public class MainActivity extends AppCompatActivity {
                             String.valueOf(event.getAngularVelocityZ()) + "\n";
                     appendTOTextStatus("Entry : " + sensorDateEntry);
 
+
                     double Raccel= (event.getAccelerationX()*event.getAccelerationX())+(event.getAccelerationY()*event.getAccelerationY())+(event.getAccelerationZ()*event.getAccelerationZ());
                     double  Ra = Math.sqrt(Raccel);
                     double Rgyro= (event.getAngularVelocityX()*event.getAngularVelocityX())+(event.getAngularVelocityY()*event.getAngularVelocityX())+(event.getAngularVelocityZ()*event.getAngularVelocityZ());
@@ -159,11 +166,12 @@ public class MainActivity extends AppCompatActivity {
 
                     }
 
+
                     //String sensorDateEntry = "PRINT \n";
                     //  gyroFileStream.write(sensorDateEntry.getBytes());
 
-                     //  } catch (IOException e) {
-                //    appendTOTextStatus("IOx" + e.getMessage());
+                    //  } catch (IOException e) {
+                    //    appendTOTextStatus("IOx" + e.getMessage());
                 } catch (Exception ex) {
                     appendTOTextStatus("Exception in gyroFileStream write" + ex.getLocalizedMessage() + ex.toString() + ex.getMessage());
                 }
@@ -187,8 +195,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return file;
     }*/
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -198,8 +204,8 @@ public class MainActivity extends AppCompatActivity {
 
         textStatus = (TextView) findViewById(R.id.textStatus);
         textView = (TextView) findViewById(R.id.textView);
-        skintemp=(TextView) findViewById(R.id.skintemp);
-        uv=(TextView) findViewById(R.id.uv);
+        skintemp = (TextView) findViewById(R.id.skintemp);
+        uv = (TextView) findViewById(R.id.uv);
         final WeakReference<Activity> reference = new WeakReference<Activity>(this);
         btnStart = (Button) findViewById(R.id.btnStart);
         btnStart.setOnClickListener(new OnClickListener() {
@@ -211,7 +217,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
+        heartBeatCache = CacheBuilder.newBuilder()
+                .expireAfterWrite(30, TimeUnit.SECONDS)
+                .build(
+                        new CacheLoader<String, String>() {
+                            @Override
+                            public String load(String key) throws Exception {
+                                return null;
+                            }
+                        }
+                );
        /* try {
             accelGyroFile = getFileCreated("gyro.txt");
 
@@ -235,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
         if (client != null) {
             try {
                 client.getSensorManager().unregisterGyroscopeEventListener(mGyroscopeEventListener);
-               client.getSensorManager().unregisterDistanceEventListener(mDistantEventListener);
+                client.getSensorManager().unregisterDistanceEventListener(mDistantEventListener);
                 client.getSensorManager().unregisterHeartRateEventListener(mHeartRateEventListener);
                 client.getSensorManager().unregisterSkinTemperatureEventListener(skinTemperatureEventListener);
                 client.getSensorManager().unregisterUVEventListener(UVEventListener);
@@ -245,6 +260,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
     private class HeartRateConsentTask extends AsyncTask<WeakReference<Activity>, Void, Void> {
         @Override
         protected Void doInBackground(WeakReference<Activity>... params) {
@@ -262,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
                     appendToUI("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
                 }
             } catch (BandException e) {
-                String exceptionMessage="";
+                String exceptionMessage = "";
                 switch (e.getErrorType()) {
                     case UNSUPPORTED_SDK_VERSION_ERROR:
                         exceptionMessage = "Microsoft Health BandService doesn't support your SDK Version. Please update to latest SDK.\n";
@@ -282,6 +298,7 @@ public class MainActivity extends AppCompatActivity {
             return null;
         }
     }
+
     private class SubscriptionTasks extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... params) {
@@ -347,6 +364,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
     private void appendToUI(final String string) {
         this.runOnUiThread(new Runnable() {
             @Override
@@ -355,6 +373,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
     private void appendTOtextView3(final String string) {
         this.runOnUiThread(new Runnable() {
             @Override
@@ -363,7 +382,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-    private void appendTOUI(final String string){
+
+    private void appendTOUI(final String string) {
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -371,6 +391,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
     private void appendTOTextView(final String string) {
         this.runOnUiThread(new Runnable() {
             @Override
@@ -379,11 +400,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-    private void appendTOskintemp(final String string){
+
+    private void appendTOskintemp(final String string) {
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-             skintemp.setText(string);
+                skintemp.setText(string);
             }
         });
 
