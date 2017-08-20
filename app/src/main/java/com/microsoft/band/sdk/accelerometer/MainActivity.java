@@ -150,6 +150,15 @@ public class MainActivity extends AppCompatActivity {
                     double Rgyro= (event.getAngularVelocityX()*event.getAngularVelocityX())+(event.getAngularVelocityY()*event.getAngularVelocityX())+(event.getAngularVelocityZ()*event.getAngularVelocityZ());
                     double  Rg = Math.sqrt(Rgyro);
                     appendTOtextView3(String.valueOf("A"+Ra +'\n'+ "G"+Rg));
+
+                    if (Raccel <0.5){
+                        appendTOtextView3("a Fall has happened ");
+                    }
+                    else{
+
+
+                    }
+
                     //String sensorDateEntry = "PRINT \n";
                     //  gyroFileStream.write(sensorDateEntry.getBytes());
 
