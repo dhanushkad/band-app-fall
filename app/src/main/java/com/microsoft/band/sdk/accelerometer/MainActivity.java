@@ -36,6 +36,8 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
+import org.w3c.dom.Text;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -53,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView textView2;
     private TextView skintemp;
     private TextView uv;
-
+    private TextView textView3;
     File accelGyroFile;
     FileOutputStream gyroFileStream;
 
@@ -127,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onBandGyroscopeChanged(final BandGyroscopeEvent event) {
 
-            if (event != null && gyroFileStream != null) {
+            if (event != null) {
 
                 try {
 
@@ -143,12 +145,16 @@ public class MainActivity extends AppCompatActivity {
                             String.valueOf(event.getAngularVelocityZ()) + "\n";
                     appendTOTextStatus("Entry : " + sensorDateEntry);
 
+                    double Raccel= (event.getAccelerationX()*event.getAccelerationX())+(event.getAccelerationY()*event.getAccelerationY())+(event.getAccelerationZ()*event.getAccelerationZ());
+                    double  Ra = Math.sqrt(Raccel);
+                    double Rgyro= (event.getAngularVelocityX()*event.getAngularVelocityX())+(event.getAngularVelocityY()*event.getAngularVelocityX())+(event.getAngularVelocityZ()*event.getAngularVelocityZ());
+                    double  Rg = Math.sqrt(Rgyro);
+                    appendTOtextView3(String.valueOf("A"+Ra +'\n'+ "G"+Rg));
                     //String sensorDateEntry = "PRINT \n";
+                    //  gyroFileStream.write(sensorDateEntry.getBytes());
 
-                    gyroFileStream.write(sensorDateEntry.getBytes());
-
-                } catch (IOException e) {
-                    appendTOTextStatus("IOx" + e.getMessage());
+                     //  } catch (IOException e) {
+                //    appendTOTextStatus("IOx" + e.getMessage());
                 } catch (Exception ex) {
                     appendTOTextStatus("Exception in gyroFileStream write" + ex.getLocalizedMessage() + ex.toString() + ex.getMessage());
                 }
@@ -163,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * This returns a file created in the documents directory.
      */
-    public File getFileCreated(String fileName) throws IOException {
+   /* public File getFileCreated(String fileName) throws IOException {
         // Get the directory for the user's documents directory.
         File file = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_DOCUMENTS), fileName);
@@ -171,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
             appendTOTextStatus("Error occured in file writing");
         }
         return file;
-    }
+    }*/
 
 
     @Override
@@ -179,6 +185,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         textView2 = (TextView) findViewById(R.id.textView2);
+        textView3 = (TextView) findViewById(R.id.textView3);
+
         textStatus = (TextView) findViewById(R.id.textStatus);
         textView = (TextView) findViewById(R.id.textView);
         skintemp=(TextView) findViewById(R.id.skintemp);
@@ -195,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        try {
+       /* try {
             accelGyroFile = getFileCreated("gyro.txt");
 
             appendTOTextStatus("File created in" + accelGyroFile.getPath());
@@ -203,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
 
         } catch (Exception ex) {
             appendTOTextStatus("Error file creation " + ex.getMessage());
-        }
+        }*/
     }
 
     @Override
@@ -335,6 +343,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 textView2.setText(string);
+            }
+        });
+    }
+    private void appendTOtextView3(final String string) {
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                textView3.setText(string);
             }
         });
     }
