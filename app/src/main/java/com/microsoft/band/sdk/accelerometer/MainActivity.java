@@ -48,8 +48,16 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Dictionary;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.logging.Handler;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -64,6 +72,10 @@ public class MainActivity extends AppCompatActivity {
     File accelGyroFile;
     FileOutputStream gyroFileStream;
     LoadingCache<String, String> heartBeatCache;
+    boolean acceleroMeterLowerThresholdReached = false;
+    long accelorMeterLowerThresholdMetTimestamp;
+    BlockingQueue<AccelorometerAggregatedEvent> accelerometerEventList = new LinkedBlockingQueue<>();
+    long fallTimeMilliseconds = 1000;
 
     private BandUVEventListener UVEventListener = new BandUVEventListener() {
         @Override
@@ -138,7 +150,6 @@ public class MainActivity extends AppCompatActivity {
             if (event != null) {
 
                 try {
-
                     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                     Date date = new Date(event.getTimestamp());
 
@@ -152,18 +163,49 @@ public class MainActivity extends AppCompatActivity {
                     appendTOTextStatus("Entry : " + sensorDateEntry);
 
 
-                    double Raccel= (event.getAccelerationX()*event.getAccelerationX())+(event.getAccelerationY()*event.getAccelerationY())+(event.getAccelerationZ()*event.getAccelerationZ());
-                    double  Ra = Math.sqrt(Raccel);
-                    double Rgyro= (event.getAngularVelocityX()*event.getAngularVelocityX())+(event.getAngularVelocityY()*event.getAngularVelocityX())+(event.getAngularVelocityZ()*event.getAngularVelocityZ());
-                    double  Rg = Math.sqrt(Rgyro);
-                    appendTOtextView3(String.valueOf("A"+Ra +'\n'+ "G"+Rg));
+                    double Raccel = (event.getAccelerationX() * event.getAccelerationX()) + (event.getAccelerationY() * event.getAccelerationY()) + (event.getAccelerationZ() * event.getAccelerationZ());
+                    double Ra = Math.sqrt(Raccel);
+                    double Rgyro = (event.getAngularVelocityX() * event.getAngularVelocityX()) + (event.getAngularVelocityY() * event.getAngularVelocityX()) + (event.getAngularVelocityZ() * event.getAngularVelocityZ());
+                    double Rg = Math.sqrt(Rgyro);
+                    appendTOtextView3(String.valueOf("A" + Ra + '\n' + "G" + Rg));
 
-                    if (Raccel <0.5){
+                    if (!acceleroMeterLowerThresholdReached && Ra < 0.5) {
                         appendTOtextView3("a Fall has happened ");
-                    }
-                    else{
+                        /**
+                         * This is when the lower threshold is met.
+                         * Now we should check if within a certain time period , the higher one is met.
+                         * For this we are gonna save the
+                         * **/
+                        acceleroMeterLowerThresholdReached = true;
+                        accelorMeterLowerThresholdMetTimestamp = event.getTimestamp();
 
+                        new java.util.Timer().schedule(
+                                new java.util.TimerTask() {
+                                    @Override
+                                    public void run() {
+                                        for (AccelorometerAggregatedEvent a: accelerometerEventList
+                                             ) {
+                                            if(a.resultantAcceleration>1.5){
+                                                // THIS IS A TWO PEAK FALL
+                                                //EVALUATE OTHER STUFF HERE
+                                            }
+                                        }
+                                        accelerometerEventList.clear();
+                                    }
+                                },
+                                fallTimeMilliseconds
+                        );
 
+                    } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() > accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds) {
+
+                        acceleroMeterLowerThresholdReached = false;
+                    } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() <= accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds) {
+
+                        AccelorometerAggregatedEvent ev = new AccelorometerAggregatedEvent();
+                        ev.resultantAcceleration = Ra;
+                        ev.timestamp = event.getTimestamp();
+
+                        accelerometerEventList.add(ev);
                     }
 
 
@@ -181,6 +223,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
 
 
     /**
