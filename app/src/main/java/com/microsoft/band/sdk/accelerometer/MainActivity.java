@@ -11,6 +11,8 @@ import com.microsoft.band.BandException;
 import com.microsoft.band.BandInfo;
 import com.microsoft.band.BandIOException;
 import com.microsoft.band.ConnectionState;
+import com.microsoft.band.sensors.BandContactEvent;
+import com.microsoft.band.sensors.BandContactEventListener;
 import com.microsoft.band.sensors.BandHeartRateEvent;
 import com.microsoft.band.sensors.HeartRateConsentListener;
 import com.microsoft.band.sensors.SampleRate;
@@ -143,6 +145,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }; // Heart rate receiving
 
+    private BandContactEventListener mContactEventListener = new BandContactEventListener() {
+        @Override
+        public void onBandContactChanged(BandContactEvent bandContactEvent) {
+
+        }
+    };
+
+
     private BandGyroscopeEventListener mGyroscopeEventListener = new BandGyroscopeEventListener() {
         @Override
         public void onBandGyroscopeChanged(final BandGyroscopeEvent event) {
@@ -170,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
                     appendTOtextView3(String.valueOf("A" + Ra + '\n' + "G" + Rg));
 
                     if (!acceleroMeterLowerThresholdReached && Ra < 0.5) {
-                        appendTOtextView3("a Fall has happened ");
+
                         /**
                          * This is when the lower threshold is met.
                          * Now we should check if within a certain time period , the higher one is met.
@@ -188,6 +198,7 @@ public class MainActivity extends AppCompatActivity {
                                             if(a.resultantAcceleration>1.5){
                                                 // THIS IS A TWO PEAK FALL
                                                 //EVALUATE OTHER STUFF HERE
+                                                appendTOtextView3("a Fall has happened ");
                                             }
                                         }
                                         accelerometerEventList.clear();
