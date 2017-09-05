@@ -13,6 +13,7 @@ import com.microsoft.band.BandIOException;
 import com.microsoft.band.ConnectionState;
 import com.microsoft.band.sensors.BandContactEvent;
 import com.microsoft.band.sensors.BandContactEventListener;
+import com.microsoft.band.sensors.BandContactState;
 import com.microsoft.band.sensors.BandHeartRateEvent;
 import com.microsoft.band.sensors.HeartRateConsentListener;
 import com.microsoft.band.sensors.SampleRate;
@@ -78,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
     long accelorMeterLowerThresholdMetTimestamp;
     BlockingQueue<AccelorometerAggregatedEvent> accelerometerEventList = new LinkedBlockingQueue<>();
     long fallTimeMilliseconds = 1000;
-
+    BandContactState lastKnownBandContactState;
     private BandUVEventListener UVEventListener = new BandUVEventListener() {
         @Override
         public void onBandUVChanged(BandUVEvent bandUVEvent) {
@@ -148,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
     private BandContactEventListener mContactEventListener = new BandContactEventListener() {
         @Override
         public void onBandContactChanged(BandContactEvent bandContactEvent) {
+            lastKnownBandContactState = bandContactEvent.getContactState();
 
         }
     };
@@ -193,11 +195,15 @@ public class MainActivity extends AppCompatActivity {
                                 new java.util.TimerTask() {
                                     @Override
                                     public void run() {
-                                        for (AccelorometerAggregatedEvent a: accelerometerEventList
-                                             ) {
-                                            if(a.resultantAcceleration>1.5){
+                                        for (AccelorometerAggregatedEvent a : accelerometerEventList
+                                                ) {
+                                            if (a.resultantAcceleration > 1.5) {
                                                 // THIS IS A TWO PEAK FALL
                                                 //EVALUATE OTHER STUFF HERE
+                                                if(lastKnownBandContactState==BandContactState.WORN || lastKnownBandContactState == BandContactState.UNKNOWN ){
+
+
+                                                }
                                                 appendTOtextView3("a Fall has happened ");
                                             }
                                         }
@@ -234,7 +240,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
-
 
 
     /**
@@ -308,6 +313,7 @@ public class MainActivity extends AppCompatActivity {
                 client.getSensorManager().unregisterHeartRateEventListener(mHeartRateEventListener);
                 client.getSensorManager().unregisterSkinTemperatureEventListener(skinTemperatureEventListener);
                 client.getSensorManager().unregisterUVEventListener(UVEventListener);
+                client.getSensorManager().unregisterContactEventListener(mContactEventListener);
 
             } catch (BandIOException e) {
                 appendTOTextStatus("Band Exception" + e.getMessage());
@@ -364,6 +370,7 @@ public class MainActivity extends AppCompatActivity {
                     client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
                     client.getSensorManager().registerSkinTemperatureEventListener(skinTemperatureEventListener);
                     client.getSensorManager().registerUVEventListener(UVEventListener);
+                    client.getSensorManager().registerContactEventListener(mContactEventListener);
 
 
                 } else {
