@@ -156,10 +156,10 @@ public class MainActivity extends AppCompatActivity {
                     double getResultantangularvelocity = (event.getAngularVelocityX() * event.getAngularVelocityX()) + (event.getAngularVelocityY() * event.getAngularVelocityX()) + (event.getAngularVelocityZ() * event.getAngularVelocityZ());
                     double Resultantangularvelocity = Math.sqrt(getResultantangularvelocity);
 
-                    appendTOTextViewOtherSensors(accelorMeterLowerThresholdMetTimestamp + " " + fallTimeMilliseconds + event.getTimestamp());
+                    appendTOTextViewOtherSensors(accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds + " " + event.getTimestamp());
                     if (!acceleroMeterLowerThresholdReached && Resultantacceleration < 0.5) {
                         appendTOTextViewFall("Lower threshold peak met. Waiting for upper threshold");
-                        client.getSensorManager().unregisterGyroscopeEventListener(mGyroscopeEventListener);
+
                         /**
                          * This is when the lower threshold is met.
                          * Now we should check if within a certain time period , the higher one is met.
@@ -181,6 +181,7 @@ public class MainActivity extends AppCompatActivity {
                                                     //THIS IS A TWO PEAK FALL
                                                     //EVALUATE OTHER STUFF HERE
                                                     appendTOTextViewFall("Upper threshold had met. Evaluating other sensors");
+                                                    client.getSensorManager().unregisterGyroscopeEventListener(mGyroscopeEventListener);
                                                     if (lastKnownBandContactState == BandContactState.WORN) {
 
                                                         client.getSensorManager().unregisterDistanceEventListener(mDistantEventListener);
@@ -217,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
                         );
 
                     } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() > accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds) {
-
+                        appendTOTextViewFall("Out of the time range");
                         acceleroMeterLowerThresholdReached = false;
 
                     } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() <= accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds) {
