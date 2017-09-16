@@ -156,8 +156,7 @@ public class MainActivity extends AppCompatActivity {
                     double getResultantangularvelocity = (event.getAngularVelocityX() * event.getAngularVelocityX()) + (event.getAngularVelocityY() * event.getAngularVelocityX()) + (event.getAngularVelocityZ() * event.getAngularVelocityZ());
                     double Resultantangularvelocity = Math.sqrt(getResultantangularvelocity);
 
-                    appendTOTextViewOtherSensors(accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds + " " + event.getTimestamp());
-                    if (!acceleroMeterLowerThresholdReached && Resultantacceleration < 0.5) {
+                     if (!acceleroMeterLowerThresholdReached && Resultantacceleration < 0.5) {
                         appendTOTextViewFall("Lower threshold peak met. Waiting for upper threshold");
 
                         /**
@@ -174,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
 
                                     public void run() {
                                         try {
-                                            appendTOTextViewFall("Timed analysis  at" +accelorMeterLowerThresholdMetTimestamp + " Number of events  : " + accelerometerEventList.size());
+                                            appendTOTextViewFall("Timed analysis starts." );
                                             for (AccelorometerAggregatedEvent a : accelerometerEventList
                                                     ) {
                                                 if (a.resultantAcceleration > 1.5) {
@@ -183,18 +182,20 @@ public class MainActivity extends AppCompatActivity {
                                                     appendTOTextViewFall("Upper threshold had met. Evaluating other sensors");
                                                     client.getSensorManager().unregisterGyroscopeEventListener(mGyroscopeEventListener);
                                                     if (lastKnownBandContactState == BandContactState.WORN) {
-
+                                                        appendTOTextViewFall("Upper threshold had met. User is wearing the band");
                                                         client.getSensorManager().unregisterDistanceEventListener(mDistantEventListener);
                                                         ArrayList<String> motionTypesList = new ArrayList<String>(motionTypeCache.asMap().values());
 
                                                         mostCommonMotionType = mostCommon(motionTypesList);
+                                                        appendTOTextViewFall("Two peak fall event positive. User was mostly " + mostCommonMotionType + " recently" );
                                                         if (mostCommonMotionType.toLowerCase().equals("idle")) {
                                                             //Probable fall after heart problem while stationary
                                                             //Check heart rate
+                                                            appendTOTextViewOtherSensors("Probable collapse while being idle. Evaluating recent heart rates.");
                                                             client.getSensorManager().unregisterHeartRateEventListener(mHeartRateEventListener);
                                                             if (largerHeartRateDetected()) {
                                                                 //A fall and a heart problem detected while idle
-                                                                appendTOTextViewOtherSensors("Probable collapse while standing up");
+                                                                appendTOTextViewOtherSensors("Probable collapse while idle, due to a heart problem.");
 
                                                             }
                                                         } else {
@@ -222,7 +223,6 @@ public class MainActivity extends AppCompatActivity {
                         acceleroMeterLowerThresholdReached = false;
 
                     } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() <= accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds) {
-                        appendTOTextViewFall("Collecting fall time events. Timestamp " + event.getTimestamp() + " Resultant : " + Resultantacceleration);
                         AccelorometerAggregatedEvent ev = new AccelorometerAggregatedEvent();
                         ev.resultantAcceleration = Resultantacceleration;
                         ev.timestamp = event.getTimestamp();
