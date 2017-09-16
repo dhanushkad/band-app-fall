@@ -30,6 +30,7 @@ import com.microsoft.band.sensors.BandSkinTemperatureEventListener;
 
 import com.microsoft.band.sensors.BandUVEvent;
 import com.microsoft.band.sensors.BandUVEventListener;
+import com.microsoft.band.sensors.UVIndexLevel;
 
 
 import android.app.Activity;
@@ -75,11 +76,16 @@ public class MainActivity extends AppCompatActivity {
     private TextView textStatus;
     private TextView textFall;
     private TextView otherSensors;
+    private BandUVEvent lastKnownUVEvent;
+    String locationBySunlight = "";
+
+
     private BandUVEventListener UVEventListener = new BandUVEventListener() {
         @Override
         public void onBandUVChanged(BandUVEvent bandUVEvent) {
             if (bandUVEvent != null) {
                 try {
+                    lastKnownUVEvent = bandUVEvent;
                 } catch (Exception e) {
                     System.out.println(e);
                 }
@@ -188,19 +194,23 @@ public class MainActivity extends AppCompatActivity {
 
                                                         mostCommonMotionType = mostCommon(motionTypesList);
                                                         appendTOTextViewFall("Two peak fall event positive. User was mostly " + mostCommonMotionType + " recently");
+
+
+                                                        evaluateSunlight();
+
                                                         if (mostCommonMotionType.toLowerCase().equals("idle")) {
                                                             //Probable fall after heart problem while stationary
                                                             //Check heart rate
-                                                            appendTOTextViewOtherSensors("Probable collapse while being idle. Evaluating recent heart rates.");
+                                                            appendTOTextViewOtherSensors("Probable collapse while being idle. Evaluating recent heart rates." + locationBySunlight);
                                                             client.getSensorManager().unregisterHeartRateEventListener(mHeartRateEventListener);
                                                             if (largerHeartRateDetected()) {
                                                                 //A fall and a heart problem detected while idle
-                                                                appendTOTextViewOtherSensors("Probable collapse while idle, due to a heart problem.");
+                                                                appendTOTextViewOtherSensors("Probable collapse while idle, irregular heart rate detected" + locationBySunlight);
 
                                                             }
                                                         } else {
                                                             //fall when moving. A trip and fall
-                                                            appendTOTextViewOtherSensors("Probable collapse while moving");
+                                                            appendTOTextViewOtherSensors("Probable fall on " + mostCommonMotionType + " user." + locationBySunlight);
                                                         }
                                                     }
 
@@ -248,6 +258,20 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    private void evaluateSunlight() {
+        if(lastKnownUVEvent.getUVIndexLevel() == UVIndexLevel.HIGH || lastKnownUVEvent.getUVIndexLevel() == UVIndexLevel.VERY_HIGH){
+
+            locationBySunlight = "Wearer in outdoor";
+        }
+        else if(lastKnownUVEvent.getUVIndexLevel() == UVIndexLevel.LOW || lastKnownUVEvent.getUVIndexLevel() == UVIndexLevel.NONE ){
+            locationBySunlight = "Wearer in indoor";
+        }
+        else {
+
+            locationBySunlight = "Wearer location uncertain, mild-sunlight";
+        }
+    }
+
 
     /**
      * This returns a file created in the documents directory.
@@ -292,7 +316,7 @@ public class MainActivity extends AppCompatActivity {
                 );
 
         motionTypeCache = CacheBuilder.newBuilder()
-                .expireAfterWrite(30, TimeUnit.SECONDS)
+                .expireAfterWrite(5, TimeUnit.SECONDS)
                 .build(
                         new CacheLoader<String, String>() {
                             @Override
