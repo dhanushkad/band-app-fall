@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
                     double getResultantangularvelocity = (event.getAngularVelocityX() * event.getAngularVelocityX()) + (event.getAngularVelocityY() * event.getAngularVelocityX()) + (event.getAngularVelocityZ() * event.getAngularVelocityZ());
                     double Resultantangularvelocity = Math.sqrt(getResultantangularvelocity);
 
-
+                    appendTOTextViewOtherSensors(accelorMeterLowerThresholdMetTimestamp + " " + fallTimeMilliseconds + event.getTimestamp());
                     if (!acceleroMeterLowerThresholdReached && Resultantacceleration < 0.5) {
                         appendTOTextViewFall("Lower threshold peak met. Waiting for upper threshold");
                         client.getSensorManager().unregisterGyroscopeEventListener(mGyroscopeEventListener);
@@ -219,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
                     } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() > accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds) {
 
                         acceleroMeterLowerThresholdReached = false;
-                        accelerometerEventList.clear();
+
                     } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() <= accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds) {
                         appendTOTextViewFall("Collecting fall time events. Timestamp " + event.getTimestamp() + " Resultant : " + Resultantacceleration);
                         AccelorometerAggregatedEvent ev = new AccelorometerAggregatedEvent();
@@ -238,6 +238,7 @@ public class MainActivity extends AppCompatActivity {
                     //    appendTOTextStatus("IOx" + e.getMessage());
                 } catch (Exception ex) {
                     //appendTOTextStatus("Exception in gyroFileStream write" + ex.getLocalizedMessage() + ex.toString() + ex.getMessage());
+                    appendTOTextViewOtherSensors(ex.getMessage());
                 }
 
             } else {
