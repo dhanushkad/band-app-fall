@@ -218,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
                                 fallTimeMilliseconds
                         );
 
-                    } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() > accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds) {
+                    } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() > accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds+5000) {
                        // appendTOTextViewFall("Out of the time range");
                         acceleroMeterLowerThresholdReached = false;
 
