@@ -179,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
 
 
                     if (!acceleroMeterLowerThresholdReached && Ra < 0.5) {
-                        appendTOTextViewFall("Lower threshold peak met. Waiting for upper threshold. HeartEvents : " +heartBeatCache.size() );
+                        appendTOTextViewFall("Lower threshold peak met. Waiting for upper threshold");
                         client.getSensorManager().unregisterGyroscopeEventListener(mGyroscopeEventListener);
                         /**
                          * This is when the lower threshold is met.
@@ -195,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
                                     @Override
                                     public void run() {
                                         try {
-                                            appendTOTextViewFall("Timed analysis Started");
+                                            appendTOTextViewFall("Timed analysis Started. No of accelerometer events : " + accelerometerEventList.size());
                                             for (AccelorometerAggregatedEvent a : accelerometerEventList
                                                     ) {
                                                 if (a.resultantAcceleration > 1.5) {
@@ -244,6 +244,7 @@ public class MainActivity extends AppCompatActivity {
                         AccelorometerAggregatedEvent ev = new AccelorometerAggregatedEvent();
                         ev.resultantAcceleration = Ra;
                         ev.timestamp = event.getTimestamp();
+
 
                         accelerometerEventList.add(ev);
                     }
