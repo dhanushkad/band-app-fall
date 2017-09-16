@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
     boolean acceleroMeterLowerThresholdReached = false;
     long accelorMeterLowerThresholdMetTimestamp;
     BlockingQueue<AccelorometerAggregatedEvent> accelerometerEventList = new LinkedBlockingQueue<>();
-    long fallTimeMilliseconds = 1000;
+    long fallTimeMilliseconds = 3000;
     BandContactState lastKnownBandContactState;
     String mostCommonMotionType;
     private BandClient client = null;
@@ -174,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
 
                                     public void run() {
                                         try {
-                                            appendTOTextViewFall("Timed analysis started. Number of events  : " + accelerometerEventList.size());
+                                            appendTOTextViewFall("Timed analysis  at" +accelorMeterLowerThresholdMetTimestamp + " Number of events  : " + accelerometerEventList.size());
                                             for (AccelorometerAggregatedEvent a : accelerometerEventList
                                                     ) {
                                                 if (a.resultantAcceleration > 1.5) {
@@ -219,14 +219,15 @@ public class MainActivity extends AppCompatActivity {
                     } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() > accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds) {
 
                         acceleroMeterLowerThresholdReached = false;
+                        accelerometerEventList.clear();
                     } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() <= accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds) {
-
+                        appendTOTextViewFall("Collecting fall time events. Timestamp " + event.getTimestamp() + " Resultant : " + Resultantacceleration);
                         AccelorometerAggregatedEvent ev = new AccelorometerAggregatedEvent();
                         ev.resultantAcceleration = Resultantacceleration;
                         ev.timestamp = event.getTimestamp();
 
 
-                        accelerometerEventList.add(ev);
+                        accelerometerEventList.put(ev);
                     }
 
 
