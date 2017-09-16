@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
                     double getResultantangularvelocity = (event.getAngularVelocityX() * event.getAngularVelocityX()) + (event.getAngularVelocityY() * event.getAngularVelocityX()) + (event.getAngularVelocityZ() * event.getAngularVelocityZ());
                     double Resultantangularvelocity = Math.sqrt(getResultantangularvelocity);
 
-                     if (!acceleroMeterLowerThresholdReached && Resultantacceleration < 0.5) {
+                    if (!acceleroMeterLowerThresholdReached && Resultantacceleration < 0.5) {
                         appendTOTextViewFall("Lower threshold peak met. Waiting for upper threshold");
 
                         /**
@@ -173,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
 
                                     public void run() {
                                         try {
-                                            appendTOTextViewFall("Timed analysis starts." );
+                                            appendTOTextViewFall("Timed analysis starts.");
                                             for (AccelorometerAggregatedEvent a : accelerometerEventList
                                                     ) {
                                                 if (a.resultantAcceleration > 1.5) {
@@ -187,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
                                                         ArrayList<String> motionTypesList = new ArrayList<String>(motionTypeCache.asMap().values());
 
                                                         mostCommonMotionType = mostCommon(motionTypesList);
-                                                        appendTOTextViewFall("Two peak fall event positive. User was mostly " + mostCommonMotionType + " recently" );
+                                                        appendTOTextViewFall("Two peak fall event positive. User was mostly " + mostCommonMotionType + " recently");
                                                         if (mostCommonMotionType.toLowerCase().equals("idle")) {
                                                             //Probable fall after heart problem while stationary
                                                             //Check heart rate
@@ -219,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
                         );
 
                     } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() > accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds) {
-                        appendTOTextViewFall("Out of the time range");
+                       // appendTOTextViewFall("Out of the time range");
                         acceleroMeterLowerThresholdReached = false;
 
                     } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() <= accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds) {
