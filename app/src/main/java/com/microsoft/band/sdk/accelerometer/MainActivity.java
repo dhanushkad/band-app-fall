@@ -176,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
                                             appendTOTextViewFall("Timed analysis starts.");
                                             for (AccelorometerAggregatedEvent a : accelerometerEventList
                                                     ) {
-                                                if (a.resultantAcceleration > 2) {
+                                                if (a.resultantAcceleration > 2.2) {
                                                     //THIS IS A TWO PEAK FALL
                                                     //EVALUATE OTHER STUFF HERE
                                                     appendTOTextViewFall("Upper threshold had met. Evaluating other sensors");
