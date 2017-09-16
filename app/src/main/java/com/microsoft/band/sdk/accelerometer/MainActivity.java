@@ -24,7 +24,6 @@ import com.microsoft.band.sensors.BandDistanceEvent;
 import com.microsoft.band.sensors.BandDistanceEventListener;
 
 import com.microsoft.band.sensors.BandHeartRateEventListener;
-//import com.microsoft.band.sensors.BandHeartRateEvent;
 
 import com.microsoft.band.sensors.BandSkinTemperatureEvent;
 import com.microsoft.band.sensors.BandSkinTemperatureEventListener;
@@ -35,7 +34,6 @@ import com.microsoft.band.sensors.BandUVEventListener;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.os.AsyncTask;
@@ -43,7 +41,6 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -52,41 +49,40 @@ import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
-import java.util.Dictionary;
-import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.logging.Handler;
 
 
 public class MainActivity extends AppCompatActivity {
     private BandClient client = null;
     private Button btnStart;
     private TextView textStatus;
-    private TextView textView;
-    private TextView textView2;
-    private TextView skintemp;
-    private TextView uv;
-    private TextView textView3;
-    File accelGyroFile;
+    private TextView textFall;
+    private TextView otherSensors;
     FileOutputStream gyroFileStream;
     LoadingCache<String, String> heartBeatCache;
+    LoadingCache<String, String> motionTypeCache;
     boolean acceleroMeterLowerThresholdReached = false;
     long accelorMeterLowerThresholdMetTimestamp;
     BlockingQueue<AccelorometerAggregatedEvent> accelerometerEventList = new LinkedBlockingQueue<>();
     long fallTimeMilliseconds = 1000;
     BandContactState lastKnownBandContactState;
+    String mostCommonMotionType;
+
     private BandUVEventListener UVEventListener = new BandUVEventListener() {
         @Override
         public void onBandUVChanged(BandUVEvent bandUVEvent) {
             if (bandUVEvent != null) {
                 try {
 
-                    appendTOUI("UV indexlevel  :  " + bandUVEvent.getUVIndexLevel());
+
                 } catch (Exception e) {
 
                     System.out.println(e);
@@ -101,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
             if (bandSkinTemperatureEvent != null) {
                 try {
 
-                    appendTOskintemp("Skin Temperature  :  " + bandSkinTemperatureEvent.getTemperature() + " Celcius ");
+
                 } catch (Exception e) {
 
                     System.out.println(e);
@@ -110,6 +106,8 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+
+
     private BandDistanceEventListener mDistantEventListener = new BandDistanceEventListener() {
         @Override
         public void onBandDistanceChanged(BandDistanceEvent bandDistanceEvent) {
@@ -117,7 +115,9 @@ public class MainActivity extends AppCompatActivity {
 
                 try {
 
-                    appendTOTextView("Movement Status  :  " + bandDistanceEvent.getMotionType().toString());
+
+                    motionTypeCache.put(Long.toString(bandDistanceEvent.getTimestamp()), bandDistanceEvent.getMotionType().toString());
+
                 } catch (Exception e) {
 
                     System.out.println(e);
@@ -134,11 +134,10 @@ public class MainActivity extends AppCompatActivity {
             if (event != null) {
                 try {
                     heartBeatCache.put(Long.toString(event.getTimestamp()), Long.toString(event.getHeartRate()));
-                    appendToUI(String.format("Heart Rate : %d beats per minute\n"
-                            + "Quality : %s\n", event.getHeartRate(), event.getQuality()));
+
                 } catch (Exception e) {
 
-                    appendToUI("Event or gyroFileStream is null");
+
                 }
 
 
@@ -172,17 +171,18 @@ public class MainActivity extends AppCompatActivity {
                             String.valueOf(event.getAngularVelocityX()) + "&" +
                             String.valueOf(event.getAngularVelocityY()) + "&" +
                             String.valueOf(event.getAngularVelocityZ()) + "\n";
-                    appendTOTextStatus("Entry : " + sensorDateEntry);
+
 
 
                     double Raccel = (event.getAccelerationX() * event.getAccelerationX()) + (event.getAccelerationY() * event.getAccelerationY()) + (event.getAccelerationZ() * event.getAccelerationZ());
                     double Ra = Math.sqrt(Raccel);
                     double Rgyro = (event.getAngularVelocityX() * event.getAngularVelocityX()) + (event.getAngularVelocityY() * event.getAngularVelocityX()) + (event.getAngularVelocityZ() * event.getAngularVelocityZ());
                     double Rg = Math.sqrt(Rgyro);
-                    appendTOtextView3(String.valueOf("A" + Ra + '\n' + "G" + Rg));
+
 
                     if (!acceleroMeterLowerThresholdReached && Ra < 0.5) {
-
+                        appendTOTextViewFall("Lower threshold peak met. Waiting for upper threshold");
+                        client.getSensorManager().unregisterGyroscopeEventListener(mGyroscopeEventListener);
                         /**
                          * This is when the lower threshold is met.
                          * Now we should check if within a certain time period , the higher one is met.
@@ -194,20 +194,40 @@ public class MainActivity extends AppCompatActivity {
                         new java.util.Timer().schedule(
                                 new java.util.TimerTask() {
                                     @Override
-                                    public void run() {
+                                    public void run() {try {
+
                                         for (AccelorometerAggregatedEvent a : accelerometerEventList
                                                 ) {
                                             if (a.resultantAcceleration > 1.5) {
-                                                // THIS IS A TWO PEAK FALL
+                                                //THIS IS A TWO PEAK FALL
                                                 //EVALUATE OTHER STUFF HERE
-                                                if(lastKnownBandContactState==BandContactState.WORN || lastKnownBandContactState == BandContactState.UNKNOWN ){
+                                                appendTOTextViewFall("Upper threshold had met. Evaluating other sensors");
+                                                if (lastKnownBandContactState == BandContactState.WORN) {
 
+                                                    client.getSensorManager().unregisterDistanceEventListener(mDistantEventListener);
+                                                    ArrayList<String> motionTypesList = new ArrayList<String>(motionTypeCache.asMap().values());
 
+                                                    mostCommonMotionType = mostCommon(motionTypesList);
+                                                    if(mostCommonMotionType.toLowerCase().equals("idle")){
+                                                        //Probable fall after heart problem while stationary
+                                                        //Check heart rate
+                                                        if(largerHeartRateDetected()){
+                                                            //A fall and a heart problem detected while idle
+                                                            appendTOTextViewOtherSensors("Probable collapse while standing up");
+                                                        }
+                                                    }
+                                                    else{
+                                                        //fall when moving. A trip and fall
+                                                        appendTOTextViewOtherSensors("Probable collapse while moving");
+                                                    }
                                                 }
-                                                appendTOtextView3("a Fall has happened ");
+
                                             }
                                         }
                                         accelerometerEventList.clear();
+                                    }
+
+                                    catch (Exception e){}
                                     }
                                 },
                                 fallTimeMilliseconds
@@ -232,11 +252,11 @@ public class MainActivity extends AppCompatActivity {
                     //  } catch (IOException e) {
                     //    appendTOTextStatus("IOx" + e.getMessage());
                 } catch (Exception ex) {
-                    appendTOTextStatus("Exception in gyroFileStream write" + ex.getLocalizedMessage() + ex.toString() + ex.getMessage());
+                    //appendTOTextStatus("Exception in gyroFileStream write" + ex.getLocalizedMessage() + ex.toString() + ex.getMessage());
                 }
 
             } else {
-                appendTOTextStatus("Event or gyroFileStream is null");
+
             }
         }
     };
@@ -258,13 +278,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        textView2 = (TextView) findViewById(R.id.textView2);
-        textView3 = (TextView) findViewById(R.id.textView3);
 
         textStatus = (TextView) findViewById(R.id.textStatus);
-        textView = (TextView) findViewById(R.id.textView);
-        skintemp = (TextView) findViewById(R.id.skintemp);
-        uv = (TextView) findViewById(R.id.uv);
+        textFall = (TextView) findViewById(R.id.textView);
+        otherSensors = (TextView) findViewById(R.id.textView2);
         final WeakReference<Activity> reference = new WeakReference<Activity>(this);
         btnStart = (Button) findViewById(R.id.btnStart);
         btnStart.setOnClickListener(new OnClickListener() {
@@ -277,6 +294,17 @@ public class MainActivity extends AppCompatActivity {
         });
 
         heartBeatCache = CacheBuilder.newBuilder()
+                .expireAfterWrite(30, TimeUnit.SECONDS)
+                .build(
+                        new CacheLoader<String, String>() {
+                            @Override
+                            public String load(String key) throws Exception {
+                                return null;
+                            }
+                        }
+                );
+
+        motionTypeCache = CacheBuilder.newBuilder()
                 .expireAfterWrite(30, TimeUnit.SECONDS)
                 .build(
                         new CacheLoader<String, String>() {
@@ -301,6 +329,57 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
+    }
+
+    private String mostCommon(ArrayList<String> array){
+
+        Map<String, Integer> map = new HashMap<String, Integer>();
+
+        for(int i = 0; i < array.size(); i++){
+            if(map.get(array.get(i)) == null){
+                map.put(array.get(i),1);
+            }else{
+                map.put(array.get(i), map.get(array.get(i)) + 1);
+            }
+        }
+        int largest = 0;
+        String stringOfLargest = "Unknown";
+        for (Map.Entry<String, Integer> entry : map.entrySet()) {
+            String key = entry.getKey();
+            int value = entry.getValue();
+            if( value > largest){
+                largest = value;
+                stringOfLargest = key;
+            }
+        }
+        return  stringOfLargest;
+    }
+
+    private boolean largerHeartRateDetected(){
+        try{
+            long heartratetotal = 0;
+
+            for (String heartRate:heartBeatCache.asMap().values()
+                    ) {
+                heartratetotal += Long.parseLong(heartRate);
+
+            }
+
+            long avgHeart = heartratetotal/heartBeatCache.size();
+
+            for (String heartRate:heartBeatCache.asMap().values()
+                    ) {
+                if(Long.parseLong(heartRate)>=(avgHeart * 1.5)){
+                    return  true;
+                }
+
+            }
+            return  false;
+        }
+        catch (Exception e){
+
+            return  false;
+        }
     }
 
     @Override
@@ -335,7 +414,7 @@ public class MainActivity extends AppCompatActivity {
                         });
                     }
                 } else {
-                    appendToUI("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
+                    appendTOTextStatus("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
                 }
             } catch (BandException e) {
                 String exceptionMessage = "";
@@ -350,10 +429,10 @@ public class MainActivity extends AppCompatActivity {
                         exceptionMessage = "Unknown error occured: " + e.getMessage() + "\n";
                         break;
                 }
-                appendToUI(exceptionMessage);
+                appendTOTextStatus(exceptionMessage);
 
             } catch (Exception e) {
-                appendToUI(e.getMessage());
+                appendTOTextStatus(e.getMessage());
             }
             return null;
         }
@@ -426,51 +505,24 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void appendToUI(final String string) {
+    private void appendTOTextViewFall(final String string) {
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                textView2.setText(string);
+                textFall.setText(string);
             }
         });
     }
 
-    private void appendTOtextView3(final String string) {
+    private void appendTOTextViewOtherSensors(final String string) {
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                textView3.setText(string);
+                otherSensors.setText(string);
             }
         });
     }
 
-    private void appendTOUI(final String string) {
-        this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                uv.setText(string);
-            }
-        });
-    }
-
-    private void appendTOTextView(final String string) {
-        this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                textView.setText(string);
-            }
-        });
-    }
-
-    private void appendTOskintemp(final String string) {
-        this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                skintemp.setText(string);
-            }
-        });
-
-    }
 
     private boolean getConnectedBandClient() throws InterruptedException, BandException {
         if (client == null) {
