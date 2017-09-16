@@ -107,7 +107,6 @@ public class MainActivity extends AppCompatActivity {
     };
 
 
-
     private BandDistanceEventListener mDistantEventListener = new BandDistanceEventListener() {
         @Override
         public void onBandDistanceChanged(BandDistanceEvent bandDistanceEvent) {
@@ -173,7 +172,6 @@ public class MainActivity extends AppCompatActivity {
                             String.valueOf(event.getAngularVelocityZ()) + "\n";
 
 
-
                     double Raccel = (event.getAccelerationX() * event.getAccelerationX()) + (event.getAccelerationY() * event.getAccelerationY()) + (event.getAccelerationZ() * event.getAccelerationZ());
                     double Ra = Math.sqrt(Raccel);
                     double Rgyro = (event.getAngularVelocityX() * event.getAngularVelocityX()) + (event.getAngularVelocityY() * event.getAngularVelocityX()) + (event.getAngularVelocityZ() * event.getAngularVelocityZ());
@@ -181,57 +179,57 @@ public class MainActivity extends AppCompatActivity {
 
 
                     if (!acceleroMeterLowerThresholdReached && Ra < 0.5) {
-                        appendTOTextViewFall("Lower threshold peak met. Waiting for upper threshold");
+                        appendTOTextViewFall("Lower threshold peak met. Waiting for upper threshold. HeartEvents : " +heartBeatCache.size() );
                         client.getSensorManager().unregisterGyroscopeEventListener(mGyroscopeEventListener);
                         /**
                          * This is when the lower threshold is met.
                          * Now we should check if within a certain time period , the higher one is met.
                          * For this we are gonna save the
                          * **/
+
                         acceleroMeterLowerThresholdReached = true;
                         accelorMeterLowerThresholdMetTimestamp = event.getTimestamp();
 
                         new java.util.Timer().schedule(
                                 new java.util.TimerTask() {
                                     @Override
-                                    public void run() {try {
+                                    public void run() {
+                                        try {
+                                            appendTOTextViewFall("Timed analysis Started");
+                                            for (AccelorometerAggregatedEvent a : accelerometerEventList
+                                                    ) {
+                                                if (a.resultantAcceleration > 1.5) {
+                                                    //THIS IS A TWO PEAK FALL
+                                                    //EVALUATE OTHER STUFF HERE
+                                                    appendTOTextViewFall("Upper threshold had met. Evaluating other sensors");
+                                                    if (lastKnownBandContactState == BandContactState.WORN) {
 
-                                        for (AccelorometerAggregatedEvent a : accelerometerEventList
-                                                ) {
-                                            if (a.resultantAcceleration > 1.5) {
-                                                //THIS IS A TWO PEAK FALL
-                                                //EVALUATE OTHER STUFF HERE
-                                                appendTOTextViewFall("Upper threshold had met. Evaluating other sensors");
-                                                if (lastKnownBandContactState == BandContactState.WORN) {
+                                                        client.getSensorManager().unregisterDistanceEventListener(mDistantEventListener);
+                                                        ArrayList<String> motionTypesList = new ArrayList<String>(motionTypeCache.asMap().values());
 
-                                                    client.getSensorManager().unregisterDistanceEventListener(mDistantEventListener);
-                                                    ArrayList<String> motionTypesList = new ArrayList<String>(motionTypeCache.asMap().values());
-
-                                                    mostCommonMotionType = mostCommon(motionTypesList);
-                                                    if(mostCommonMotionType.toLowerCase().equals("idle")){
-                                                        //Probable fall after heart problem while stationary
-                                                        //Check heart rate
-                                                        client.getSensorManager().unregisterHeartRateEventListener(mHeartRateEventListener);
-                                                        if(largerHeartRateDetected()){
-                                                            //A fall and a heart problem detected while idle
-                                                            appendTOTextViewOtherSensors("Probable collapse while standing up");
+                                                        mostCommonMotionType = mostCommon(motionTypesList);
+                                                        if (mostCommonMotionType.toLowerCase().equals("idle")) {
+                                                            //Probable fall after heart problem while stationary
+                                                            //Check heart rate
+                                                            client.getSensorManager().unregisterHeartRateEventListener(mHeartRateEventListener);
+                                                            if (largerHeartRateDetected()) {
+                                                                //A fall and a heart problem detected while idle
+                                                                appendTOTextViewOtherSensors("Probable collapse while standing up");
+                                                            }
+                                                        } else {
+                                                            //fall when moving. A trip and fall
+                                                            appendTOTextViewOtherSensors("Probable collapse while moving");
                                                         }
                                                     }
-                                                    else{
-                                                        //fall when moving. A trip and fall
-                                                        appendTOTextViewOtherSensors("Probable collapse while moving");
-                                                    }
+
                                                 }
-
                                             }
+                                            accelerometerEventList.clear();
+                                            client.getSensorManager().registerGyroscopeEventListener(mGyroscopeEventListener, SampleRate.MS128);
+                                            client.getSensorManager().registerDistanceEventListener(mDistantEventListener);
+                                            client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
+                                        } catch (Exception e) {
                                         }
-                                        accelerometerEventList.clear();
-                                        client.getSensorManager().registerGyroscopeEventListener(mGyroscopeEventListener, SampleRate.MS128);
-                                        client.getSensorManager().registerDistanceEventListener(mDistantEventListener);
-                                        client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
-                                    }
-
-                                    catch (Exception e){}
 
                                     }
                                 },
@@ -336,14 +334,14 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private String mostCommon(ArrayList<String> array){
+    private String mostCommon(ArrayList<String> array) {
 
         Map<String, Integer> map = new HashMap<String, Integer>();
 
-        for(int i = 0; i < array.size(); i++){
-            if(map.get(array.get(i)) == null){
-                map.put(array.get(i),1);
-            }else{
+        for (int i = 0; i < array.size(); i++) {
+            if (map.get(array.get(i)) == null) {
+                map.put(array.get(i), 1);
+            } else {
                 map.put(array.get(i), map.get(array.get(i)) + 1);
             }
         }
@@ -352,38 +350,37 @@ public class MainActivity extends AppCompatActivity {
         for (Map.Entry<String, Integer> entry : map.entrySet()) {
             String key = entry.getKey();
             int value = entry.getValue();
-            if( value > largest){
+            if (value > largest) {
                 largest = value;
                 stringOfLargest = key;
             }
         }
-        return  stringOfLargest;
+        return stringOfLargest;
     }
 
-    private boolean largerHeartRateDetected(){
-        try{
+    private boolean largerHeartRateDetected() {
+        try {
             long heartratetotal = 0;
 
-            for (String heartRate:heartBeatCache.asMap().values()
+            for (String heartRate : heartBeatCache.asMap().values()
                     ) {
                 heartratetotal += Long.parseLong(heartRate);
 
             }
 
-            long avgHeart = heartratetotal/heartBeatCache.size();
+            long avgHeart = heartratetotal / heartBeatCache.size();
 
-            for (String heartRate:heartBeatCache.asMap().values()
+            for (String heartRate : heartBeatCache.asMap().values()
                     ) {
-                if(Long.parseLong(heartRate)>=(avgHeart * 1.5)){
-                    return  true;
+                if (Long.parseLong(heartRate) >= (avgHeart * 1.5)) {
+                    return true;
                 }
 
             }
-            return  false;
-        }
-        catch (Exception e){
+            return false;
+        } catch (Exception e) {
 
-            return  false;
+            return false;
         }
     }
 
