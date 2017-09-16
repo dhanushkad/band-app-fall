@@ -61,11 +61,6 @@ import java.util.concurrent.TimeUnit;
 
 
 public class MainActivity extends AppCompatActivity {
-    private BandClient client = null;
-    private Button btnStart;
-    private TextView textStatus;
-    private TextView textFall;
-    private TextView otherSensors;
     FileOutputStream gyroFileStream;
     LoadingCache<String, String> heartBeatCache;
     LoadingCache<String, String> motionTypeCache;
@@ -75,16 +70,17 @@ public class MainActivity extends AppCompatActivity {
     long fallTimeMilliseconds = 1000;
     BandContactState lastKnownBandContactState;
     String mostCommonMotionType;
-
+    private BandClient client = null;
+    private Button btnStart;
+    private TextView textStatus;
+    private TextView textFall;
+    private TextView otherSensors;
     private BandUVEventListener UVEventListener = new BandUVEventListener() {
         @Override
         public void onBandUVChanged(BandUVEvent bandUVEvent) {
             if (bandUVEvent != null) {
                 try {
-
-
                 } catch (Exception e) {
-
                     System.out.println(e);
                 }
             }
@@ -96,16 +92,12 @@ public class MainActivity extends AppCompatActivity {
         public void onBandSkinTemperatureChanged(BandSkinTemperatureEvent bandSkinTemperatureEvent) {
             if (bandSkinTemperatureEvent != null) {
                 try {
-
-
                 } catch (Exception e) {
-
                     System.out.println(e);
                 }
             }
         }
     };
-
 
     private BandDistanceEventListener mDistantEventListener = new BandDistanceEventListener() {
         @Override
@@ -113,18 +105,13 @@ public class MainActivity extends AppCompatActivity {
             if (bandDistanceEvent != null) {
 
                 try {
-
-
                     motionTypeCache.put(Long.toString(bandDistanceEvent.getTimestamp()), bandDistanceEvent.getMotionType().toString());
-
                 } catch (Exception e) {
-
                     System.out.println(e);
                 }
             }
         }
     };  // Movement Status receiving
-
 
     private BandHeartRateEventListener mHeartRateEventListener = new BandHeartRateEventListener() {
 
@@ -133,13 +120,9 @@ public class MainActivity extends AppCompatActivity {
             if (event != null) {
                 try {
                     heartBeatCache.put(Long.toString(event.getTimestamp()), Long.toString(event.getHeartRate()));
-
                 } catch (Exception e) {
 
-
                 }
-
-
             }
         }
     }; // Heart rate receiving
@@ -148,7 +131,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onBandContactChanged(BandContactEvent bandContactEvent) {
             lastKnownBandContactState = bandContactEvent.getContactState();
-
         }
     };
 
@@ -156,9 +138,7 @@ public class MainActivity extends AppCompatActivity {
     private BandGyroscopeEventListener mGyroscopeEventListener = new BandGyroscopeEventListener() {
         @Override
         public void onBandGyroscopeChanged(final BandGyroscopeEvent event) {
-
             if (event != null) {
-
                 try {
                     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                     Date date = new Date(event.getTimestamp());
@@ -171,65 +151,64 @@ public class MainActivity extends AppCompatActivity {
                             String.valueOf(event.getAngularVelocityY()) + "&" +
                             String.valueOf(event.getAngularVelocityZ()) + "\n";
 
-
-                    double Raccel = (event.getAccelerationX() * event.getAccelerationX()) + (event.getAccelerationY() * event.getAccelerationY()) + (event.getAccelerationZ() * event.getAccelerationZ());
-                    double Ra = Math.sqrt(Raccel);
-                    double Rgyro = (event.getAngularVelocityX() * event.getAngularVelocityX()) + (event.getAngularVelocityY() * event.getAngularVelocityX()) + (event.getAngularVelocityZ() * event.getAngularVelocityZ());
-                    double Rg = Math.sqrt(Rgyro);
+                    double getResultantacceleration = (event.getAccelerationX() * event.getAccelerationX()) + (event.getAccelerationY() * event.getAccelerationY()) + (event.getAccelerationZ() * event.getAccelerationZ());
+                    double Resultantacceleration = Math.sqrt(getResultantacceleration );
+                    double getResultantangularvelocity = (event.getAngularVelocityX() * event.getAngularVelocityX()) + (event.getAngularVelocityY() * event.getAngularVelocityX()) + (event.getAngularVelocityZ() * event.getAngularVelocityZ());
+                    double Resultantangularvelocity = Math.sqrt(getResultantangularvelocity);
 
 
                     if (!acceleroMeterLowerThresholdReached && Ra < 0.5) {
-                        appendTOTextViewFall("Lower threshold peak met. Waiting for upper threshold. HeartEvents : " +heartBeatCache.size() );
+                        appendTOTextViewFall("Lower threshold peak met. Waiting for upper threshold");
                         client.getSensorManager().unregisterGyroscopeEventListener(mGyroscopeEventListener);
                         /**
                          * This is when the lower threshold is met.
                          * Now we should check if within a certain time period , the higher one is met.
                          * For this we are gonna save the
                          * **/
-
                         acceleroMeterLowerThresholdReached = true;
                         accelorMeterLowerThresholdMetTimestamp = event.getTimestamp();
 
                         new java.util.Timer().schedule(
                                 new java.util.TimerTask() {
                                     @Override
-                                    public void run() {
-                                        try {
-                                            appendTOTextViewFall("Timed analysis Started");
-                                            for (AccelorometerAggregatedEvent a : accelerometerEventList
-                                                    ) {
-                                                if (a.resultantAcceleration > 1.5) {
-                                                    //THIS IS A TWO PEAK FALL
-                                                    //EVALUATE OTHER STUFF HERE
-                                                    appendTOTextViewFall("Upper threshold had met. Evaluating other sensors");
-                                                    if (lastKnownBandContactState == BandContactState.WORN) {
+                                    public void run() {try {
 
-                                                        client.getSensorManager().unregisterDistanceEventListener(mDistantEventListener);
-                                                        ArrayList<String> motionTypesList = new ArrayList<String>(motionTypeCache.asMap().values());
+                                        for (AccelorometerAggregatedEvent a : accelerometerEventList
+                                                ) {
+                                            if (a.resultantAcceleration > 1.5) {
+                                                //THIS IS A TWO PEAK FALL
+                                                //EVALUATE OTHER STUFF HERE
+                                                appendTOTextViewFall("Upper threshold had met. Evaluating other sensors");
+                                                if (lastKnownBandContactState == BandContactState.WORN) {
 
-                                                        mostCommonMotionType = mostCommon(motionTypesList);
-                                                        if (mostCommonMotionType.toLowerCase().equals("idle")) {
-                                                            //Probable fall after heart problem while stationary
-                                                            //Check heart rate
-                                                            client.getSensorManager().unregisterHeartRateEventListener(mHeartRateEventListener);
-                                                            if (largerHeartRateDetected()) {
-                                                                //A fall and a heart problem detected while idle
-                                                                appendTOTextViewOtherSensors("Probable collapse while standing up");
-                                                            }
-                                                        } else {
-                                                            //fall when moving. A trip and fall
-                                                            appendTOTextViewOtherSensors("Probable collapse while moving");
+                                                    client.getSensorManager().unregisterDistanceEventListener(mDistantEventListener);
+                                                    ArrayList<String> motionTypesList = new ArrayList<String>(motionTypeCache.asMap().values());
+
+                                                    mostCommonMotionType = mostCommon(motionTypesList);
+                                                    if(mostCommonMotionType.toLowerCase().equals("idle")){
+                                                        //Probable fall after heart problem while stationary
+                                                        //Check heart rate
+                                                        client.getSensorManager().unregisterHeartRateEventListener(mHeartRateEventListener);
+                                                        if(largerHeartRateDetected()){
+                                                            //A fall and a heart problem detected while idle
+                                                            appendTOTextViewOtherSensors("Probable collapse while standing up");
                                                         }
                                                     }
-
+                                                    else{
+                                                        //fall when moving. A trip and fall
+                                                        appendTOTextViewOtherSensors("Probable collapse while moving");
+                                                    }
                                                 }
+
                                             }
-                                            accelerometerEventList.clear();
-                                            client.getSensorManager().registerGyroscopeEventListener(mGyroscopeEventListener, SampleRate.MS128);
-                                            client.getSensorManager().registerDistanceEventListener(mDistantEventListener);
-                                            client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
-                                        } catch (Exception e) {
                                         }
+                                        accelerometerEventList.clear();
+                                        client.getSensorManager().registerGyroscopeEventListener(mGyroscopeEventListener, SampleRate.MS128);
+                                        client.getSensorManager().registerDistanceEventListener(mDistantEventListener);
+                                        client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
+                                    }
+
+                                    catch (Exception e){}
 
                                     }
                                 },
@@ -334,14 +313,14 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private String mostCommon(ArrayList<String> array) {
+    private String mostCommon(ArrayList<String> array){
 
         Map<String, Integer> map = new HashMap<String, Integer>();
 
-        for (int i = 0; i < array.size(); i++) {
-            if (map.get(array.get(i)) == null) {
-                map.put(array.get(i), 1);
-            } else {
+        for(int i = 0; i < array.size(); i++){
+            if(map.get(array.get(i)) == null){
+                map.put(array.get(i),1);
+            }else{
                 map.put(array.get(i), map.get(array.get(i)) + 1);
             }
         }
@@ -350,37 +329,38 @@ public class MainActivity extends AppCompatActivity {
         for (Map.Entry<String, Integer> entry : map.entrySet()) {
             String key = entry.getKey();
             int value = entry.getValue();
-            if (value > largest) {
+            if( value > largest){
                 largest = value;
                 stringOfLargest = key;
             }
         }
-        return stringOfLargest;
+        return  stringOfLargest;
     }
 
-    private boolean largerHeartRateDetected() {
-        try {
+    private boolean largerHeartRateDetected(){
+        try{
             long heartratetotal = 0;
 
-            for (String heartRate : heartBeatCache.asMap().values()
+            for (String heartRate:heartBeatCache.asMap().values()
                     ) {
                 heartratetotal += Long.parseLong(heartRate);
 
             }
 
-            long avgHeart = heartratetotal / heartBeatCache.size();
+            long avgHeart = heartratetotal/heartBeatCache.size();
 
-            for (String heartRate : heartBeatCache.asMap().values()
+            for (String heartRate:heartBeatCache.asMap().values()
                     ) {
-                if (Long.parseLong(heartRate) >= (avgHeart * 1.5)) {
-                    return true;
+                if(Long.parseLong(heartRate)>=(avgHeart * 1.5)){
+                    return  true;
                 }
 
             }
-            return false;
-        } catch (Exception e) {
+            return  false;
+        }
+        catch (Exception e){
 
-            return false;
+            return  false;
         }
     }
 
@@ -399,83 +379,6 @@ public class MainActivity extends AppCompatActivity {
             } catch (BandIOException e) {
                 appendTOTextStatus("Band Exception" + e.getMessage());
             }
-        }
-    }
-
-    private class HeartRateConsentTask extends AsyncTask<WeakReference<Activity>, Void, Void> {
-        @Override
-        protected Void doInBackground(WeakReference<Activity>... params) {
-            try {
-                if (getConnectedBandClient()) {
-
-                    if (params[0].get() != null) {
-                        client.getSensorManager().requestHeartRateConsent(params[0].get(), new HeartRateConsentListener() {
-                            @Override
-                            public void userAccepted(boolean consentGiven) {
-                            }
-                        });
-                    }
-                } else {
-                    appendTOTextStatus("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
-                }
-            } catch (BandException e) {
-                String exceptionMessage = "";
-                switch (e.getErrorType()) {
-                    case UNSUPPORTED_SDK_VERSION_ERROR:
-                        exceptionMessage = "Microsoft Health BandService doesn't support your SDK Version. Please update to latest SDK.\n";
-                        break;
-                    case SERVICE_ERROR:
-                        exceptionMessage = "Microsoft Health BandService is not available. Please make sure Microsoft Health is installed and that you have the correct permissions.\n";
-                        break;
-                    default:
-                        exceptionMessage = "Unknown error occured: " + e.getMessage() + "\n";
-                        break;
-                }
-                appendTOTextStatus(exceptionMessage);
-
-            } catch (Exception e) {
-                appendTOTextStatus(e.getMessage());
-            }
-            return null;
-        }
-    }
-
-    private class SubscriptionTasks extends AsyncTask<Void, Void, Void> {
-        @Override
-        protected Void doInBackground(Void... params) {
-            try {
-                if (getConnectedBandClient()) {
-                    appendTOTextStatus("Band is connected.\n");
-                    client.getSensorManager().registerGyroscopeEventListener(mGyroscopeEventListener, SampleRate.MS128);
-                    client.getSensorManager().registerDistanceEventListener(mDistantEventListener);
-                    client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
-                    client.getSensorManager().registerSkinTemperatureEventListener(skinTemperatureEventListener);
-                    client.getSensorManager().registerUVEventListener(UVEventListener);
-                    client.getSensorManager().registerContactEventListener(mContactEventListener);
-
-
-                } else {
-                    appendTOTextStatus("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
-                }
-            } catch (BandException e) {
-                String exceptionMessage = "";
-                switch (e.getErrorType()) {
-                    case UNSUPPORTED_SDK_VERSION_ERROR:
-                        exceptionMessage = "Microsoft Health BandService doesn't support your SDK Version. Please update to latest SDK.\n";
-                        break;
-                    case SERVICE_ERROR:
-                        exceptionMessage = "Microsoft Health BandService is not available. Please make sure Microsoft Health is installed and that you have the correct permissions.\n";
-                        break;
-                    default:
-                        exceptionMessage = "Unknown error occured: " + e.getMessage() + "\n";
-                        break;
-                }
-                appendTOTextStatus(exceptionMessage);
-
-            } catch (Exception e) {
-                appendTOTextStatus(e.getMessage());
-            }
-            return null;
         }
     }
 
@@ -525,7 +428,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
     private boolean getConnectedBandClient() throws InterruptedException, BandException {
         if (client == null) {
             BandInfo[] devices = BandClientManager.getInstance().getPairedBands();
@@ -540,6 +442,83 @@ public class MainActivity extends AppCompatActivity {
 
         appendTOTextStatus("Band is connecting...\n");
         return ConnectionState.CONNECTED == client.connect().await();
+    }
+
+    private class HeartRateConsentTask extends AsyncTask<WeakReference<Activity>, Void, Void> {
+        @Override
+        protected Void doInBackground(WeakReference<Activity>... params) {
+            try {
+                if (getConnectedBandClient()) {
+
+                    if (params[0].get() != null) {
+                        client.getSensorManager().requestHeartRateConsent(params[0].get(), new HeartRateConsentListener() {
+                            @Override
+                            public void userAccepted(boolean consentGiven) {
+                            }
+                        });
+                    }
+                } else {
+                    appendTOTextStatus("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
+                }
+            } catch (BandException e) {
+                String exceptionMessage = "";
+                switch (e.getErrorType()) {
+                    case UNSUPPORTED_SDK_VERSION_ERROR:
+                        exceptionMessage = "Microsoft Health BandService doesn't support your SDK Version. Please update to latest SDK.\n";
+                        break;
+                    case SERVICE_ERROR:
+                        exceptionMessage = "Microsoft Health BandService is not available. Please make sure Microsoft Health is installed and that you have the correct permissions.\n";
+                        break;
+                    default:
+                        exceptionMessage = "Unknown error occured: " + e.getMessage() + "\n";
+                        break;
+                }
+                appendTOTextStatus(exceptionMessage);
+
+            } catch (Exception e) {
+                appendTOTextStatus(e.getMessage());
+            }
+            return null;
+        }
+    }
+
+    private class SubscriptionTasks extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                if (getConnectedBandClient()) {
+                    //("Band is connected.\n");
+                    client.getSensorManager().registerGyroscopeEventListener(mGyroscopeEventListener, SampleRate.MS128);
+                    client.getSensorManager().registerDistanceEventListener(mDistantEventListener);
+                    client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
+                    client.getSensorManager().registerSkinTemperatureEventListener(skinTemperatureEventListener);
+                    client.getSensorManager().registerUVEventListener(UVEventListener);
+                    client.getSensorManager().registerContactEventListener(mContactEventListener);
+
+
+                } else {
+                    appendTOTextStatus("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
+                }
+            } catch (BandException e) {
+                String exceptionMessage = "";
+                switch (e.getErrorType()) {
+                    case UNSUPPORTED_SDK_VERSION_ERROR:
+                        exceptionMessage = "Microsoft Health BandService doesn't support your SDK Version. Please update to latest SDK.\n";
+                        break;
+                    case SERVICE_ERROR:
+                        exceptionMessage = "Microsoft Health BandService is not available. Please make sure Microsoft Health is installed and that you have the correct permissions.\n";
+                        break;
+                    default:
+                        exceptionMessage = "Unknown error occured: " + e.getMessage() + "\n";
+                        break;
+                }
+                appendTOTextStatus(exceptionMessage);
+
+            } catch (Exception e) {
+                appendTOTextStatus(e.getMessage());
+            }
+            return null;
+        }
     }
 
 }
