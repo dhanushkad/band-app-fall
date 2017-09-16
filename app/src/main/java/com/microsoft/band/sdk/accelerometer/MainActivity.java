@@ -176,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
                                             appendTOTextViewFall("Timed analysis starts.");
                                             for (AccelorometerAggregatedEvent a : accelerometerEventList
                                                     ) {
-                                                if (a.resultantAcceleration > 1.5) {
+                                                if (a.resultantAcceleration > 2) {
                                                     //THIS IS A TWO PEAK FALL
                                                     //EVALUATE OTHER STUFF HERE
                                                     appendTOTextViewFall("Upper threshold had met. Evaluating other sensors");
@@ -218,10 +218,10 @@ public class MainActivity extends AppCompatActivity {
                                 fallTimeMilliseconds
                         );
 
-                    } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() > accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds+5000) {
-                       // appendTOTextViewFall("Out of the time range");
+                    } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() > accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds + 5000) {
+                        // appendTOTextViewFall("Out of the time range");
                         acceleroMeterLowerThresholdReached = false;
-
+                        accelerometerEventList.clear();
                     } else if (acceleroMeterLowerThresholdReached && event.getTimestamp() <= accelorMeterLowerThresholdMetTimestamp + fallTimeMilliseconds) {
                         AccelorometerAggregatedEvent ev = new AccelorometerAggregatedEvent();
                         ev.resultantAcceleration = Resultantacceleration;
