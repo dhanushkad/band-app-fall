@@ -211,6 +211,7 @@ public class MainActivity extends AppCompatActivity {
                                                     if(mostCommonMotionType.toLowerCase().equals("idle")){
                                                         //Probable fall after heart problem while stationary
                                                         //Check heart rate
+                                                        client.getSensorManager().unregisterHeartRateEventListener(mHeartRateEventListener);
                                                         if(largerHeartRateDetected()){
                                                             //A fall and a heart problem detected while idle
                                                             appendTOTextViewOtherSensors("Probable collapse while standing up");
@@ -225,9 +226,13 @@ public class MainActivity extends AppCompatActivity {
                                             }
                                         }
                                         accelerometerEventList.clear();
+                                        client.getSensorManager().registerGyroscopeEventListener(mGyroscopeEventListener, SampleRate.MS128);
+                                        client.getSensorManager().registerDistanceEventListener(mDistantEventListener);
+                                        client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
                                     }
 
                                     catch (Exception e){}
+
                                     }
                                 },
                                 fallTimeMilliseconds
