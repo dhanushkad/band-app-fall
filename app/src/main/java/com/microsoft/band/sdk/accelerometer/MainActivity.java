@@ -515,7 +515,7 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(Void... params) {
             try {
                 if (getConnectedBandClient()) {
-                    //("Band is connected.\n");
+                    appendTOTextStatus("Band is connected.\n");
                     client.getSensorManager().registerGyroscopeEventListener(mGyroscopeEventListener, SampleRate.MS128);
                     client.getSensorManager().registerDistanceEventListener(mDistantEventListener);
                     client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
